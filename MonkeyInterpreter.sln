@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonkeyInterpreterDotNet", "MonkeyInterpreterDotNet\MonkeyInterpreterDotNet.csproj", "{112BF8A3-3E6A-4B05-A5D5-5A1A9E8C5BEE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonkeyInterpreter", "MonkeyInterpreter\MonkeyInterpreter.csproj", "{112BF8A3-3E6A-4B05-A5D5-5A1A9E8C5BEE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonkeyInterpreter.Tests", "MonkeyInterpreter.Tests\MonkeyInterpreter.Tests.csproj", "{0B1AE76A-3CC9-4D80-9084-9A0013CF74D9}"
 EndProject

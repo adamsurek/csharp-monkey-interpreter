@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MonkeyInterpreterDotNet\MonkeyInterpreterDotNet.csproj" />
+      <ProjectReference Include="..\MonkeyInterpreter\MonkeyInterpreter.csproj" />
     </ItemGroup>
 
 </Project>
