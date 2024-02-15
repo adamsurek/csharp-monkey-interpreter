@@ -2,41 +2,61 @@
 
 public class Token(string type, string literal)
 {
-	public const string ILLEGAL = "ILLEGAL";
-	public const string EOF = "\0";
+	public const string Illegal = "ILLEGAL";
+	public const string Eof = "\0";
 
 	// Identifiers
-	public const string IDENT = "IDENT";
-	public const string INT = "INT";
+	public const string Ident = "IDENT";
+	public const string Int = "INT";
 
 	// Operators
-	public const string ASSIGN = "=";
-	public const string PLUS = "+";
+	public const string Assign = "=";
+	public const string Plus = "+";
+	public const string Minus = "-";
+	public const string Slash = "/";
+	public const string Asterisk = "*";
+	public const string GThan = ">";
+	public const string LThan = "<";
+	public const string Bang = "!";
+	
+	// Comparison
+	public const string Equal = "==";
+	public const string NEqual = "!=";
 
 	// Delimiters
-	public const string COMMA = ",";
-	public const string SEMICOLON = ";";
+	public const string Comma = ",";
+	public const string Semicolon = ";";
 	
-	public const string LPAREN = "(";
-	public const string RPAREN = ")";
-	public const string LBRACE = "{";
-	public const string RBRACE = "}";
+	public const string LParen = "(";
+	public const string RParen = ")";
+	public const string LBrace = "{";
+	public const string RBrace = "}";
 
 	// Keywords
-	public const string FUNCTION = "FUNCTION";
-	public const string LET = "LET";
+	public const string Function = "FUNCTION";
+	public const string Let = "LET";
+	public const string True = "TRUE";
+	public const string False = "FALSE";
+	public const string If = "IF";
+	public const string Else = "ELSE";
+	public const string Return = "Return";
 		
 	public string Type = type;
 	public string Literal = literal;
 
 	public Dictionary<string, string> Keywords = new Dictionary<string, string>()
 	{
-		{ "fn", FUNCTION },
-		{ "let", LET }
+		{ "fn", Function },
+		{ "let", Let },
+		{ "true", True },
+		{ "false", False },
+		{ "if", If },
+		{ "else", Else },
+		{ "return", Return },
 	};
 
 	public string LookupIdentifier(string identifier)
 	{
-		return Keywords.GetValueOrDefault(identifier, IDENT);
+		return Keywords.GetValueOrDefault(identifier, Ident);
 	}
 }
