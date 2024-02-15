@@ -7,5 +7,4 @@ me with a better understanding in the following areas:
 
 - How interpreters work, as well as its fundamental components (lexers, parsers, etc.)
 - Unit testing and Test Driven Development
-- C# and .Net
-
+- C# and .NET
