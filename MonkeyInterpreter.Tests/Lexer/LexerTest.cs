@@ -9,10 +9,10 @@ using MonkeyInterpreterDotNet.Lexer;
 
 public class LexerTest
 {
-	private readonly ITestOutputHelper output;
+	private readonly ITestOutputHelper _output;
 	public LexerTest(ITestOutputHelper output)
 	{
-		this.output = output;
+		this._output = output;
 	}
 	
 	[Fact]
@@ -28,46 +28,94 @@ public class LexerTest
 		            		};
 		            
 		            		let result = add(five, ten);
+		            		!-/*5;
+		            		5 < 10 > 5;
+		            		
+		            		if (5  < 10) {
+		            			return true;
+		            		} else {
+		            			return false;	
+		            		}
+		            		
+		            		10 == 10;
+		            		10 != 9;
 		            """;
 		var tests = new List<List<string>>()
 		{
-			new List<string> { Token.LET, "let" }, 
-			new List<string> { Token.IDENT, "five" }, 
-			new List<string> { Token.ASSIGN, "=" }, 
-			new List<string> { Token.INT, "5" }, 
-			new List<string> { Token.SEMICOLON, ";" }, 
-			new List<string> { Token.LET, "let" }, 
-			new List<string> { Token.IDENT, "ten" }, 
-			new List<string> { Token.ASSIGN, "=" }, 
-			new List<string> { Token.INT, "10" }, 
-			new List<string> { Token.SEMICOLON, ";" }, 
-			new List<string> { Token.LET, "let" }, 
-			new List<string> { Token.IDENT, "add" }, 
-			new List<string> { Token.ASSIGN, "=" }, 
-			new List<string> { Token.FUNCTION, "fn" }, 
-			new List<string> { Token.LPAREN, "(" }, 
-			new List<string> { Token.IDENT, "x" },
-			new List<string> { Token.COMMA, "," }, 
-			new List<string> { Token.IDENT, "y" }, 
-			new List<string> { Token.RPAREN, ")" }, 
-			new List<string> { Token.LBRACE, "{" }, 
-			new List<string> { Token.IDENT, "x" }, 
-			new List<string> { Token.PLUS, "+" }, 
-			new List<string> { Token.IDENT, "y" }, 
-			new List<string> { Token.SEMICOLON, ";" }, 
-			new List<string> { Token.RBRACE, "}" }, 
-			new List<string> { Token.SEMICOLON, ";" }, 
-			new List<string> { Token.LET, "let" }, 
-			new List<string> { Token.IDENT, "result" }, 
-			new List<string> { Token.ASSIGN, "=" }, 
-			new List<string> { Token.IDENT, "add" }, 
-			new List<string> { Token.LPAREN, "(" }, 
-			new List<string> { Token.IDENT, "five" }, 
-			new List<string> { Token.COMMA, "," }, 
-			new List<string> { Token.IDENT, "ten" }, 
-			new List<string> { Token.RPAREN, ")" }, 
-			new List<string> { Token.SEMICOLON, ";" }, 
-			new List<string> { Token.EOF, "" },
+			new() { Token.Let, "let" }, 
+			new() { Token.Ident, "five" }, 
+			new() { Token.Assign, "=" }, 
+			new() { Token.Int, "5" }, 
+			new() { Token.Semicolon, ";" }, 
+			new() { Token.Let, "let" }, 
+			new() { Token.Ident, "ten" }, 
+			new() { Token.Assign, "=" }, 
+			new() { Token.Int, "10" }, 
+			new() { Token.Semicolon, ";" }, 
+			new() { Token.Let, "let" }, 
+			new() { Token.Ident, "add" }, 
+			new() { Token.Assign, "=" }, 
+			new() { Token.Function, "fn" }, 
+			new() { Token.LParen, "(" }, 
+			new() { Token.Ident, "x" },
+			new() { Token.Comma, "," }, 
+			new() { Token.Ident, "y" }, 
+			new() { Token.RParen, ")" }, 
+			new() { Token.LBrace, "{" }, 
+			new() { Token.Ident, "x" }, 
+			new() { Token.Plus, "+" }, 
+			new() { Token.Ident, "y" }, 
+			new() { Token.Semicolon, ";" }, 
+			new() { Token.RBrace, "}" }, 
+			new() { Token.Semicolon, ";" }, 
+			new() { Token.Let, "let" }, 
+			new() { Token.Ident, "result" }, 
+			new() { Token.Assign, "=" }, 
+			new() { Token.Ident, "add" }, 
+			new() { Token.LParen, "(" }, 
+			new() { Token.Ident, "five" }, 
+			new() { Token.Comma, "," }, 
+			new() { Token.Ident, "ten" }, 
+			new() { Token.RParen, ")" }, 
+			new() { Token.Semicolon, ";" }, 
+			new() { Token.Bang, "!" },
+			new() { Token.Minus, "-" },
+			new() { Token.Slash, "/" },
+			new() { Token.Asterisk, "*" },
+			new() { Token.Int, "5" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.Int, "5" },
+			new() { Token.LThan, "<" },
+			new() { Token.Int, "10" },
+			new() { Token.GThan, ">" },
+			new() { Token.Int, "5" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.If, "if" },
+			new() { Token.LParen, "(" },
+			new() { Token.Int, "5" },
+			new() { Token.LThan, "<" },
+			new() { Token.Int, "10" },
+			new() { Token.RParen, ")" },
+			new() { Token.LBrace, "{" },
+			new() { Token.Return, "return" },
+			new() { Token.True, "true" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.RBrace, "}" },
+			new() { Token.Else, "else" },
+			new() { Token.LBrace, "{" },
+			new() { Token.Return, "return" },
+			new() { Token.False, "false" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.RBrace, "}" },
+			new() { Token.Int, "10" },
+			new() { Token.Equal, "==" },
+			new() { Token.Int, "10" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.Int, "10" },
+			new() { Token.NEqual, "!=" },
+			new() { Token.Int, "9" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.Eof, "" },
 		};
 		
 		Lexer lexer = new Lexer(input);
