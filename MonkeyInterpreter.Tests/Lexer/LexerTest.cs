@@ -5,7 +5,7 @@ namespace MonkeyInterpreter.Tests.Lexer;
 
 using System.Collections.Generic;
 
-using MonkeyInterpreter.Core.Lexer;
+using Core;
 
 public class LexerTest
 {

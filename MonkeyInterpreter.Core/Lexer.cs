@@ -1,4 +1,4 @@
-﻿namespace MonkeyInterpreter.Core.Lexer;
+﻿namespace MonkeyInterpreter.Core;
 
 public class Lexer
 {
