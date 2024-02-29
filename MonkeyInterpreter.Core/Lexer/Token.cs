@@ -1,4 +1,4 @@
-﻿namespace MonkeyInterpreterDotNet.Lexer;
+﻿namespace MonkeyInterpreter.Core.Lexer;
 
 public class Token(string type, string literal)
 {
