@@ -20,8 +20,8 @@ public class Parser
 		PeekToken = _Lexer.NextToken();
 	}
 
-	public Tree.Program ParseProgram()
+	public Root ParseProgram()
 	{
-		return new Tree.Program();
+		return new Root();
 	}
 }
