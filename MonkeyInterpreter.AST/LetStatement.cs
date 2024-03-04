@@ -4,7 +4,7 @@ namespace MonkeyInterpreter.AST;
 
 public struct LetStatement
 {
-	public Token _Token;
-	public Identifier Name;
-	public IExpression Value;
+	public Token Token { get; }
+	public Identifier Name { get; }
+	public IExpression Value { get; }
 }

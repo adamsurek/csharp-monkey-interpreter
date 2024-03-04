@@ -4,6 +4,6 @@ namespace MonkeyInterpreter.AST;
 
 public struct Identifier
 {
-	public Token _Token;
-	public string Value;
+	public Token Token { get; }
+	public string Value { get; }
 }

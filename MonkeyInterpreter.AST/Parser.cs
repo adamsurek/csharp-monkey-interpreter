@@ -5,19 +5,19 @@ namespace MonkeyInterpreter.AST;
 
 public class Parser
 {
-	public Lexer _Lexer;
-	public Token? CurrentToken;
-	public Token? PeekToken;
+	private Token? _currentToken;
+	private Token? _peekToken;
+	private Lexer _lexer;
 
 	public Parser(Lexer lexer)
 	{
-		_Lexer = lexer;
+		_lexer = lexer;
 	}
 
 	public void NextToken()
 	{
-		CurrentToken = PeekToken;
-		PeekToken = _Lexer.NextToken();
+		_currentToken = _peekToken;
+		_peekToken = _lexer.NextToken();
 	}
 
 	public Root ParseProgram()

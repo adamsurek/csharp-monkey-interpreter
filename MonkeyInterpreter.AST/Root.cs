@@ -27,11 +27,11 @@ public class Root : IStatement, IExpression
 
 	public string TokenLiteral(LetStatement statement)
 	{
-		return statement._Token.Literal;
+		return statement.Token.Literal;
 	}
 		
 	public string TokenLiteral(Identifier identifier)
 	{
-		return identifier._Token.Literal;
+		return identifier.Token.Literal;
 	}
 }
