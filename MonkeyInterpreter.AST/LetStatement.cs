@@ -2,9 +2,19 @@
 
 namespace MonkeyInterpreter.AST;
 
-public struct LetStatement
+public struct LetStatement : IStatement
 {
-	public Token Token { get; }
-	public Identifier Name { get; }
+	public Token Token { get; set; }
+	public Identifier Name { get; set; }
 	public IExpression Value { get; }
+
+	public LetStatement StatementNode()
+	{
+		return this;
+	}
+	
+	public string TokenLiteral()
+	{
+		return Token.Literal;
+	}
 }
