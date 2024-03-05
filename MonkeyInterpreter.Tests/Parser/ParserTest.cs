@@ -47,12 +47,20 @@ public class ParserTest
 		AST.Parser parser = new(lexer);
 
 		AbstractSyntaxTree abstractSyntaxTree = parser.ParseProgram();
+		CheckParserErrors(parser);
 
 		for (int i = 0; i < identifiers.Count; i++)
 		{
 			_output.WriteLine($"Index: {i} - Statement: {abstractSyntaxTree.Statements[i]} - Identifier: {identifiers[i]}");
 			Assert.True(LetStatement_SingleStatement_IsCompleteStatement(abstractSyntaxTree.Statements[i], identifiers[i]));
 		}
+		
+	}
+
+	private void CheckParserErrors(AST.Parser parser)
+	{
+		List<string> errors = parser.Errors();
+		Assert.Empty(errors);
 		
 	}
 

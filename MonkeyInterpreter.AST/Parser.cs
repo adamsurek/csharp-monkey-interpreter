@@ -8,10 +8,12 @@ public class Parser
 	private Token _currentToken;
 	private Token _peekToken;
 	private Lexer _lexer;
+	private List<string> _errors;
 
 	public Parser(Lexer lexer)
 	{
 		_lexer = lexer;
+		_errors = new();
 		NextToken();
 		NextToken();
 	}
@@ -101,7 +103,17 @@ public class Parser
 			return true;
 		}
 		
+		PeekError(token);
 		return false;
 	}
 
+	public List<string> Errors()
+	{
+		return _errors;
+	}
+
+	private void PeekError(string token)
+	{
+		_errors.Add($"Expected next token to be {token}, got {_peekToken.Type} instead");
+	}
 }
