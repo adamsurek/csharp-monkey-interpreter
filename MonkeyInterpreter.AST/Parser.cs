@@ -37,13 +37,13 @@ public class Parser
 		return abstractSyntaxTree;
 	}
 	
-	public void NextToken()
+	private void NextToken()
 	{
 		_currentToken = _peekToken;
 		_peekToken = _lexer.NextToken();
 	}
 
-	public IStatement? ParseStatement()
+	private IStatement? ParseStatement()
 	{
 		switch (_currentToken.Type)
 		{
