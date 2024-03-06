@@ -2,13 +2,12 @@
 
 namespace MonkeyInterpreter.AST;
 
-public class LetStatement : IStatement
+public class ReturnStatement : IStatement
 {
 	public Token Token { get; set; }
-	public Identifier Name { get; set; }
-	public IExpression Value { get; }
+	public IExpression ReturnValue { get; set; }
 
-	public LetStatement(Token token)
+	public ReturnStatement(Token token)
 	{
 		Token = token;
 	}

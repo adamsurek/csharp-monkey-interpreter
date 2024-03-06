@@ -37,29 +37,28 @@ public class Parser
 		return abstractSyntaxTree;
 	}
 	
-	public void NextToken()
+	private void NextToken()
 	{
 		_currentToken = _peekToken;
 		_peekToken = _lexer.NextToken();
 	}
 
-	public IStatement? ParseStatement()
+	private IStatement? ParseStatement()
 	{
 		switch (_currentToken.Type)
 		{
 			case Token.Let:
 				return ParseLetStatement();
+			case Token.Return:
+				return ParseReturnStatement();
 			default:
 				return null;
 		}
 	}
 
-	public LetStatement? ParseLetStatement()
+	private LetStatement? ParseLetStatement()
 	{
-		LetStatement letStatement = new()
-		{
-			Token = _currentToken
-		};
+		LetStatement letStatement = new(_currentToken);
 
 		if (!ExpectPeek(Token.Ident))
 		{
@@ -85,6 +84,19 @@ public class Parser
 		return letStatement;
 	}
 
+	private ReturnStatement ParseReturnStatement()
+	{
+		ReturnStatement returnStatement = new(_currentToken);
+		NextToken();
+
+		while (!IsCurrentToken(Token.Semicolon))
+		{
+			NextToken();
+		}
+
+		return returnStatement;
+	}
+	
 	private bool IsCurrentToken(string token)
 	{
 		return _currentToken?.Type == token;
