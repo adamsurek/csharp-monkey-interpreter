@@ -66,7 +66,17 @@ public class ParserTest
 
 	private bool LetStatement_SingleStatement_IsCompleteStatement(IStatement statement, string name)
 	{
-		LetStatement letStatement = statement.StatementNode();
+		LetStatement letStatement;
+		
+		if (statement is LetStatement)
+		{
+			letStatement = (LetStatement)statement;
+		}
+		else
+		{
+			_output.WriteLine("Statement is not a 'let' statement");
+			return false;
+		}
 		
 		if (statement.TokenLiteral() != "let")
 		{
@@ -76,7 +86,7 @@ public class ParserTest
 
 		if (letStatement.Name.Value != name)
 		{
-			_output.WriteLine($"Statement value '{statement.StatementNode().Name.Value}' doesn't equal {name}");
+			_output.WriteLine($"Statement value '{letStatement.Name.Value}' doesn't equal {name}");
 			return false;
 		}
 
