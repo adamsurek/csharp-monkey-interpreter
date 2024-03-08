@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using Xunit.Abstractions;
 using MonkeyInterpreter.AST;
-using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.Tests.Parser;
 
@@ -123,5 +122,58 @@ public class ParserTest
 		}
 		
 		return true;
+	}
+}
+
+public class IdentifierStatementTests
+{
+
+	[Theory]
+	[InlineData("foobar;", 1)]
+	public void IdentifierExpression_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+	
+		Assert.Equal(expectedStatementCount, ast.Statements.Count);
+	}
+
+	[Theory]
+	[InlineData("foobar;")]
+	public void IdentifierExpression_StatementIsExpressionStatement(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+	
+		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
+	}
+
+	[Theory]
+	[InlineData("foobar;")]
+	public void IdentifierExpression_ExpressionStatementExpressionIsIdentifier(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		
+		Assert.IsType<Identifier>(expressionStatement.Expression);
+	}
+
+	[Theory]
+	[InlineData("foobar;", "foobar")]
+	public void IdentifierExpression_ReturnsExpectedExpression(string expression, string expectedValue)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		Identifier identifier = (Identifier)expressionStatement.Expression;
+
+		Assert.Equal(expectedValue, identifier.Value);
 	}
 }
