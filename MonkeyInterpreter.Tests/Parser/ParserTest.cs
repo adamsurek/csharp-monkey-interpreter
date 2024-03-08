@@ -125,7 +125,7 @@ public class ParserTest
 	}
 }
 
-public class IdentifierStatementTests
+public class IdentifierExpressionTests
 {
 
 	[Theory]
