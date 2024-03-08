@@ -3,6 +3,17 @@ using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.AST;
 
+public enum TokenPrecedence
+{
+	Lowest = 1,
+	Equals,
+	LessGreater,
+	Sum,
+	Product,
+	Prefix,
+	Call
+}
+
 public class Parser
 {
 	private Token _currentToken;
@@ -10,12 +21,21 @@ public class Parser
 	private Lexer _lexer;
 	private List<string> _errors;
 
+	private delegate IExpression ParsePrefixFunc();
+	private delegate IExpression ParseInfixFunc(IExpression expression);
+
+	private Dictionary<string, ParsePrefixFunc> PrefixParsers;
+	private Dictionary<string, ParseInfixFunc> InfixParsers;
+
 	public Parser(Lexer lexer)
 	{
 		_lexer = lexer;
 		_errors = new();
 		NextToken();
 		NextToken();
+
+		PrefixParsers = new Dictionary<string, ParsePrefixFunc>();
+		RegisterPrefixFunction(Token.Ident, ParseIdentifier);
 	}
 
 	public AbstractSyntaxTree ParseProgram()
@@ -52,8 +72,15 @@ public class Parser
 			case Token.Return:
 				return ParseReturnStatement();
 			default:
-				return null;
+				return ParseExpressionStatement();
 		}
+	}
+
+	private IExpression? ParseExpression(TokenPrecedence precedence)
+	{
+		ParsePrefixFunc? prefixFunc = PrefixParsers.GetValueOrDefault(_currentToken.Type);
+
+		return prefixFunc?.Invoke();
 	}
 
 	private LetStatement? ParseLetStatement()
@@ -97,6 +124,24 @@ public class Parser
 		return returnStatement;
 	}
 	
+	private ExpressionStatement? ParseExpressionStatement()
+	{
+		ExpressionStatement expressionStatement = new(_currentToken);
+		expressionStatement.Expression = ParseExpression(TokenPrecedence.Lowest);
+
+		if (IsPeekToken(Token.Semicolon))
+		{
+			NextToken();
+		}
+
+		return expressionStatement;
+	}
+
+	private IExpression ParseIdentifier()
+	{
+		return new Identifier(token: _currentToken, value: _currentToken.Literal);
+	}
+	
 	private bool IsCurrentToken(string token)
 	{
 		return _currentToken?.Type == token;
@@ -127,5 +172,15 @@ public class Parser
 	private void PeekError(string token)
 	{
 		_errors.Add($"Expected next token to be {token}, got {_peekToken.Type} instead");
+	}
+
+	private void RegisterPrefixFunction(string token, ParsePrefixFunc function)
+	{
+		PrefixParsers[token] = function;
+	}
+	
+	private void RegisterInfixFunction(string token, ParseInfixFunc function)
+	{
+		InfixParsers[token] = function;
 	}
 }

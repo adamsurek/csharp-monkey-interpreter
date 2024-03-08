@@ -1,6 +1,8 @@
-﻿namespace MonkeyInterpreter.AST;
+﻿using System.Text;
 
-public class AbstractSyntaxTree
+namespace MonkeyInterpreter.AST;
+
+public class AbstractSyntaxTree : INode
 {
 	public List<IStatement> Statements;
 	public List<IExpression> Expressions;
@@ -13,5 +15,16 @@ public class AbstractSyntaxTree
 		}
 			
 		return "";
+	}
+
+	public string String()
+	{
+		StringBuilder stringBuilder = new();
+		foreach (IStatement statement in Statements)
+		{
+			stringBuilder.Append(statement.String());
+		}
+
+		return stringBuilder.ToString();
 	}
 }
