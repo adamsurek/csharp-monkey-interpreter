@@ -127,7 +127,6 @@ public class ParserTest
 
 public class IdentifierExpressionTests
 {
-
 	[Theory]
 	[InlineData("foobar;", 1)]
 	public void IdentifierExpression_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
@@ -165,7 +164,7 @@ public class IdentifierExpressionTests
 
 	[Theory]
 	[InlineData("foobar;", "foobar")]
-	public void IdentifierExpression_ReturnsExpectedExpression(string expression, string expectedValue)
+	public void IdentifierExpression_ReturnsExpectedValue(string expression, string expectedValue)
 	{
 		Core.Lexer lexer = new(expression);
 		AST.Parser parser = new(lexer);
@@ -177,3 +176,56 @@ public class IdentifierExpressionTests
 		Assert.Equal(expectedValue, identifier.Value);
 	}
 }
+
+public class IntegerLiteralExpressionTests
+{
+	[Theory]
+	[InlineData("5;", 1)]
+	public void IntegerLiteralExpression_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		Assert.Equal(expectedStatementCount, ast.Statements.Count);
+	}
+	
+	[Theory]
+	[InlineData("5;")]
+	public void IntegerLiteralExpression_StatementIsExpressionStatement(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
+	}
+	
+	[Theory]
+	[InlineData("5;")]
+	public void IntegerLiteralExpression_ExpressionStatementExpressionIsIntegerLiteral(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+	
+		Assert.IsType<IntegerLiteral>(expressionStatement.Expression);
+	}
+
+	[Theory]
+	[InlineData("5;", 5)]
+	public void IntegerLiteralExpression_ReturnsExpectedValue(string expression, int expectedValue)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		IntegerLiteral integerLiteral = (IntegerLiteral)expressionStatement.Expression;
+
+		Assert.Equal(expectedValue, integerLiteral.Value);
+	}
+}
+
