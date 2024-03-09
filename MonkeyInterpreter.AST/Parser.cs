@@ -36,6 +36,7 @@ public class Parser
 
 		PrefixParsers = new Dictionary<string, ParsePrefixFunc>();
 		RegisterPrefixFunction(Token.Ident, ParseIdentifier);
+		RegisterPrefixFunction(Token.Int, ParseIntegerLiteral);
 	}
 
 	public AbstractSyntaxTree ParseProgram()
@@ -140,6 +141,22 @@ public class Parser
 	private IExpression ParseIdentifier()
 	{
 		return new Identifier(token: _currentToken, value: _currentToken.Literal);
+	}
+
+	private IExpression? ParseIntegerLiteral()
+	{
+		IntegerLiteral integerLiteral = new()
+		{
+			Token = _currentToken
+		};
+
+		if (!int.TryParse(_currentToken.Literal, out integerLiteral.Value))
+		{
+			_errors.Add($"Could not parse {_currentToken.Literal} as integer");
+			return null;
+		}
+
+		return integerLiteral;
 	}
 	
 	private bool IsCurrentToken(string token)
