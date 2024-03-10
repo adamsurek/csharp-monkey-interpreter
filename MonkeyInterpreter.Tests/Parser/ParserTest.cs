@@ -86,7 +86,6 @@ public class ParserTest
 	{
 		List<string> errors = parser.Errors();
 		Assert.Empty(errors);
-		
 	}
 
 	private bool LetStatement_SingleStatement_IsCompleteStatement(IStatement statement, string name)
@@ -227,5 +226,104 @@ public class IntegerLiteralExpressionTests
 
 		Assert.Equal(expectedValue, integerLiteral.Value);
 	}
+}
+
+public class PrefixOperatorTests
+{
+	[Theory]
+	[InlineData("!5;")]
+	[InlineData("-15;")]
+	private void CheckParserErrors(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		
+		Assert.Empty(parser.Errors());
+	}
+	
+	[Theory]
+	[InlineData("!5;", 1)]
+	[InlineData("-15;", 1)]
+	public void PrefixOperator_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+		
+		Assert.Equal(expectedStatementCount, ast.Statements.Count);
+	}
+	
+	[Theory]
+	[InlineData("!5;")]
+	[InlineData("-15;")]
+	public void PrefixOperator_StatementIsExpressionStatement(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
+	}
+	
+	[Theory]
+	[InlineData("!5;")]
+	[InlineData("-15;")]
+	public void PrefixOperator_ExpressionStatementIsPrefixExpression(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+	
+		Assert.IsType<PrefixExpression>(expressionStatement.Expression);
+	}
+	
+	[Theory]
+	[InlineData("!5;", "!")]
+	[InlineData("-15;", "-")]
+	public void PrefixOperator_PrefixExpressionOperatorIsCorrect(string expression, string expectedOperator)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		PrefixExpression prefixExpression = (PrefixExpression)expressionStatement.Expression;
+
+		Assert.Equal(expectedOperator, prefixExpression.Operator);
+	}
+
+	[Theory]
+	[InlineData("!5;")]
+	[InlineData("-15;")]
+	public void PrefixOperator_PrefixExpressionRightIsIntegerLiteral(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		PrefixExpression prefixExpression = (PrefixExpression)expressionStatement.Expression;
+
+		Assert.IsType<IntegerLiteral>(prefixExpression.Right);
+	}
+	
+	[Theory]
+	[InlineData("!5;", 5)]
+	[InlineData("-15;", 15)]
+	public void PrefixOperator_IsCorrectIntegerLiteral(string expression, int expectedLiteral)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		PrefixExpression prefixExpression = (PrefixExpression)expressionStatement.Expression;
+		IntegerLiteral integerLiteral = (IntegerLiteral)prefixExpression.Right;
+
+		Assert.Equal(expectedLiteral, integerLiteral.Value);
+	}
+	
 }
 
