@@ -1,5 +1,4 @@
-﻿using MonkeyInterpreter.AST;
-using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.AST;
 
@@ -24,8 +23,8 @@ public class Parser
 	private delegate IExpression ParsePrefixFunc();
 	private delegate IExpression ParseInfixFunc(IExpression expression);
 
-	private Dictionary<string, ParsePrefixFunc> PrefixParsers;
-	private Dictionary<string, ParseInfixFunc> InfixParsers;
+	private Dictionary<string, ParsePrefixFunc> _prefixParsers;
+	private Dictionary<string, ParseInfixFunc> _infixParsers;
 
 	public Parser(Lexer lexer)
 	{
@@ -34,9 +33,12 @@ public class Parser
 		NextToken();
 		NextToken();
 
-		PrefixParsers = new Dictionary<string, ParsePrefixFunc>();
+		_prefixParsers = new Dictionary<string, ParsePrefixFunc>();
 		RegisterPrefixFunction(Token.Ident, ParseIdentifier);
 		RegisterPrefixFunction(Token.Int, ParseIntegerLiteral);
+		RegisterPrefixFunction(Token.Bang, ParsePrefixExpression);
+		RegisterPrefixFunction(Token.Minus, ParsePrefixExpression);
+		
 	}
 
 	public AbstractSyntaxTree ParseProgram()
@@ -79,9 +81,15 @@ public class Parser
 
 	private IExpression? ParseExpression(TokenPrecedence precedence)
 	{
-		ParsePrefixFunc? prefixFunc = PrefixParsers.GetValueOrDefault(_currentToken.Type);
+		ParsePrefixFunc? prefixFunc = _prefixParsers.GetValueOrDefault(_currentToken.Type);
 
-		return prefixFunc?.Invoke();
+		if (prefixFunc is null)
+		{
+			NoPrefixParseFunctionError(_currentToken.Type);
+			return null;
+		}
+
+		return prefixFunc.Invoke();
 	}
 
 	private LetStatement? ParseLetStatement()
@@ -158,15 +166,28 @@ public class Parser
 
 		return integerLiteral;
 	}
-	
+
+	private IExpression ParsePrefixExpression()
+	{
+		PrefixExpression expression = new()
+		{
+			Token = _currentToken,
+			Operator = _currentToken.Literal
+		};
+		
+		NextToken();
+
+		expression.Right = ParseExpression(TokenPrecedence.Prefix);
+		return expression;
+	}
 	private bool IsCurrentToken(string token)
 	{
-		return _currentToken?.Type == token;
+		return _currentToken.Type == token;
 	}
 
 	private bool IsPeekToken(string token)
 	{
-		return _peekToken?.Type == token;
+		return _peekToken.Type == token;
 	}
 
 	private bool ExpectPeek(string token)
@@ -191,13 +212,18 @@ public class Parser
 		_errors.Add($"Expected next token to be {token}, got {_peekToken.Type} instead");
 	}
 
+	private void NoPrefixParseFunctionError(string token)
+	{
+		_errors.Add($"No prefix parse function for {token} found");
+	}
+
 	private void RegisterPrefixFunction(string token, ParsePrefixFunc function)
 	{
-		PrefixParsers[token] = function;
+		_prefixParsers[token] = function;
 	}
 	
 	private void RegisterInfixFunction(string token, ParseInfixFunc function)
 	{
-		InfixParsers[token] = function;
+		_infixParsers[token] = function;
 	}
 }
