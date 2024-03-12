@@ -1,7 +1,9 @@
-﻿using MonkeyInterpreter.AST;
-using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.AST;
+
+// TODO: Handle nulls
+// TODO: Add method XML comments
 
 public enum TokenPrecedence
 {
@@ -24,8 +26,20 @@ public class Parser
 	private delegate IExpression ParsePrefixFunc();
 	private delegate IExpression ParseInfixFunc(IExpression expression);
 
-	private Dictionary<string, ParsePrefixFunc> PrefixParsers;
-	private Dictionary<string, ParseInfixFunc> InfixParsers;
+	private Dictionary<string, ParsePrefixFunc> _prefixParsers;
+	private Dictionary<string, ParseInfixFunc> _infixParsers;
+
+	public Dictionary<string, TokenPrecedence> TokenPrecedenceCategoryMap = new()
+	{
+		{ Token.Equal, TokenPrecedence.Equals },
+		{ Token.NEqual, TokenPrecedence.Equals },
+		{ Token.LThan, TokenPrecedence.LessGreater },
+		{ Token.GThan, TokenPrecedence.LessGreater },
+		{ Token.Plus, TokenPrecedence.Sum },
+		{ Token.Minus, TokenPrecedence.Sum },
+		{ Token.Slash, TokenPrecedence.Product },
+		{ Token.Asterisk, TokenPrecedence.Product },
+	};
 
 	public Parser(Lexer lexer)
 	{
@@ -34,9 +48,22 @@ public class Parser
 		NextToken();
 		NextToken();
 
-		PrefixParsers = new Dictionary<string, ParsePrefixFunc>();
+		_prefixParsers = new Dictionary<string, ParsePrefixFunc>();
 		RegisterPrefixFunction(Token.Ident, ParseIdentifier);
 		RegisterPrefixFunction(Token.Int, ParseIntegerLiteral);
+		RegisterPrefixFunction(Token.Bang, ParsePrefixExpression);
+		RegisterPrefixFunction(Token.Minus, ParsePrefixExpression);
+
+		_infixParsers = new Dictionary<string, ParseInfixFunc>();
+		RegisterInfixFunction(Token.Plus, ParseInfixExpression);
+		RegisterInfixFunction(Token.Minus, ParseInfixExpression);
+		RegisterInfixFunction(Token.Slash, ParseInfixExpression);
+		RegisterInfixFunction(Token.Asterisk, ParseInfixExpression);
+		RegisterInfixFunction(Token.Equal, ParseInfixExpression);
+		RegisterInfixFunction(Token.NEqual, ParseInfixExpression);
+		RegisterInfixFunction(Token.LThan, ParseInfixExpression);
+		RegisterInfixFunction(Token.GThan, ParseInfixExpression);
+		
 	}
 
 	public AbstractSyntaxTree ParseProgram()
@@ -79,9 +106,30 @@ public class Parser
 
 	private IExpression? ParseExpression(TokenPrecedence precedence)
 	{
-		ParsePrefixFunc? prefixFunc = PrefixParsers.GetValueOrDefault(_currentToken.Type);
+		ParsePrefixFunc? prefixFunc = _prefixParsers.GetValueOrDefault(_currentToken.Type);
 
-		return prefixFunc?.Invoke();
+		if (prefixFunc is null)
+		{
+			NoPrefixParseFunctionError(_currentToken.Type);
+			return null;
+		}
+
+		IExpression leftExpression = prefixFunc.Invoke();
+
+		while (!IsPeekToken(Token.Semicolon) && precedence < PeekPrecedence())
+		{
+			ParseInfixFunc? infixFunc = _infixParsers.GetValueOrDefault(_peekToken.Type);
+
+			if (infixFunc is null)
+			{
+				return leftExpression;
+			}
+			
+			NextToken();
+			leftExpression = infixFunc.Invoke(leftExpression);
+		}
+
+		return leftExpression;
 	}
 
 	private LetStatement? ParseLetStatement()
@@ -158,15 +206,45 @@ public class Parser
 
 		return integerLiteral;
 	}
+
+	private IExpression ParsePrefixExpression()
+	{
+		PrefixExpression expression = new()
+		{
+			Token = _currentToken,
+			Operator = _currentToken.Literal
+		};
+		
+		NextToken();
+
+		expression.Right = ParseExpression(TokenPrecedence.Prefix);
+		return expression;
+	}
+
+	private IExpression ParseInfixExpression(IExpression left)
+	{
+		InfixExpression expression = new()
+		{
+			Token = _currentToken,
+			Operator = _currentToken.Literal,
+			Left = left
+		};
+
+		TokenPrecedence precedence = CurrentPrecedence();
+		NextToken();
+		expression.Right = ParseExpression(precedence);
+
+		return expression;
+	}
 	
 	private bool IsCurrentToken(string token)
 	{
-		return _currentToken?.Type == token;
+		return _currentToken.Type == token;
 	}
 
 	private bool IsPeekToken(string token)
 	{
-		return _peekToken?.Type == token;
+		return _peekToken.Type == token;
 	}
 
 	private bool ExpectPeek(string token)
@@ -191,13 +269,28 @@ public class Parser
 		_errors.Add($"Expected next token to be {token}, got {_peekToken.Type} instead");
 	}
 
+	private void NoPrefixParseFunctionError(string token)
+	{
+		_errors.Add($"No prefix parse function for {token} found");
+	}
+
 	private void RegisterPrefixFunction(string token, ParsePrefixFunc function)
 	{
-		PrefixParsers[token] = function;
+		_prefixParsers[token] = function;
 	}
 	
 	private void RegisterInfixFunction(string token, ParseInfixFunc function)
 	{
-		InfixParsers[token] = function;
+		_infixParsers[token] = function;
+	}
+
+	private TokenPrecedence PeekPrecedence()
+	{
+			return TokenPrecedenceCategoryMap.GetValueOrDefault(_peekToken.Type, TokenPrecedence.Lowest);
+	}
+	
+	private TokenPrecedence CurrentPrecedence()
+	{
+			return TokenPrecedenceCategoryMap.GetValueOrDefault(_currentToken.Type, TokenPrecedence.Lowest);
 	}
 }
