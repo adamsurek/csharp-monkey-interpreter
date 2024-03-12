@@ -2,6 +2,9 @@
 
 namespace MonkeyInterpreter.AST;
 
+// TODO: Handle nulls
+// TODO: Add method XML comments
+
 public enum TokenPrecedence
 {
 	Lowest = 1,
@@ -26,6 +29,18 @@ public class Parser
 	private Dictionary<string, ParsePrefixFunc> _prefixParsers;
 	private Dictionary<string, ParseInfixFunc> _infixParsers;
 
+	public Dictionary<string, TokenPrecedence> TokenPrecedenceCategoryMap = new()
+	{
+		{ Token.Equal, TokenPrecedence.Equals },
+		{ Token.NEqual, TokenPrecedence.Equals },
+		{ Token.LThan, TokenPrecedence.LessGreater },
+		{ Token.GThan, TokenPrecedence.LessGreater },
+		{ Token.Plus, TokenPrecedence.Sum },
+		{ Token.Minus, TokenPrecedence.Sum },
+		{ Token.Slash, TokenPrecedence.Product },
+		{ Token.Asterisk, TokenPrecedence.Product },
+	};
+
 	public Parser(Lexer lexer)
 	{
 		_lexer = lexer;
@@ -38,6 +53,16 @@ public class Parser
 		RegisterPrefixFunction(Token.Int, ParseIntegerLiteral);
 		RegisterPrefixFunction(Token.Bang, ParsePrefixExpression);
 		RegisterPrefixFunction(Token.Minus, ParsePrefixExpression);
+
+		_infixParsers = new Dictionary<string, ParseInfixFunc>();
+		RegisterInfixFunction(Token.Plus, ParseInfixExpression);
+		RegisterInfixFunction(Token.Minus, ParseInfixExpression);
+		RegisterInfixFunction(Token.Slash, ParseInfixExpression);
+		RegisterInfixFunction(Token.Asterisk, ParseInfixExpression);
+		RegisterInfixFunction(Token.Equal, ParseInfixExpression);
+		RegisterInfixFunction(Token.NEqual, ParseInfixExpression);
+		RegisterInfixFunction(Token.LThan, ParseInfixExpression);
+		RegisterInfixFunction(Token.GThan, ParseInfixExpression);
 		
 	}
 
@@ -89,7 +114,22 @@ public class Parser
 			return null;
 		}
 
-		return prefixFunc.Invoke();
+		IExpression leftExpression = prefixFunc.Invoke();
+
+		while (!IsPeekToken(Token.Semicolon) && precedence < PeekPrecedence())
+		{
+			ParseInfixFunc? infixFunc = _infixParsers.GetValueOrDefault(_peekToken.Type);
+
+			if (infixFunc is null)
+			{
+				return leftExpression;
+			}
+			
+			NextToken();
+			leftExpression = infixFunc.Invoke(leftExpression);
+		}
+
+		return leftExpression;
 	}
 
 	private LetStatement? ParseLetStatement()
@@ -180,6 +220,23 @@ public class Parser
 		expression.Right = ParseExpression(TokenPrecedence.Prefix);
 		return expression;
 	}
+
+	private IExpression ParseInfixExpression(IExpression left)
+	{
+		InfixExpression expression = new()
+		{
+			Token = _currentToken,
+			Operator = _currentToken.Literal,
+			Left = left
+		};
+
+		TokenPrecedence precedence = CurrentPrecedence();
+		NextToken();
+		expression.Right = ParseExpression(precedence);
+
+		return expression;
+	}
+	
 	private bool IsCurrentToken(string token)
 	{
 		return _currentToken.Type == token;
@@ -225,5 +282,15 @@ public class Parser
 	private void RegisterInfixFunction(string token, ParseInfixFunc function)
 	{
 		_infixParsers[token] = function;
+	}
+
+	private TokenPrecedence PeekPrecedence()
+	{
+			return TokenPrecedenceCategoryMap.GetValueOrDefault(_peekToken.Type, TokenPrecedence.Lowest);
+	}
+	
+	private TokenPrecedence CurrentPrecedence()
+	{
+			return TokenPrecedenceCategoryMap.GetValueOrDefault(_currentToken.Type, TokenPrecedence.Lowest);
 	}
 }
