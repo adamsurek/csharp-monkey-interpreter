@@ -53,6 +53,8 @@ public class Parser
 		RegisterPrefixFunction(Token.Int, ParseIntegerLiteral);
 		RegisterPrefixFunction(Token.Bang, ParsePrefixExpression);
 		RegisterPrefixFunction(Token.Minus, ParsePrefixExpression);
+		RegisterPrefixFunction(Token.True, ParseBooleanLiteral);
+		RegisterPrefixFunction(Token.False, ParseBooleanLiteral);
 
 		_infixParsers = new Dictionary<string, ParseInfixFunc>();
 		RegisterInfixFunction(Token.Plus, ParseInfixExpression);
@@ -205,6 +207,11 @@ public class Parser
 		}
 
 		return integerLiteral;
+	}
+
+	private IExpression ParseBooleanLiteral()
+	{
+		return new BooleanLiteral(token: _currentToken, value: IsCurrentToken(Token.True));
 	}
 
 	private IExpression ParsePrefixExpression()
