@@ -434,3 +434,29 @@ public class InfixExpressionTests
 		Assert.Equal(expectedRightOperand, integerLiteral.Value);
 	}
 }
+
+public class OperatorPrecedenceTests
+{
+	[Theory]
+	[InlineData("-a*b","((-a)*b)")]
+	[InlineData("!-a","(!(-a))")]
+	[InlineData("a+b+c","((a+b)+c)")]
+	[InlineData("a+b-c","((a+b)-c)")]
+	[InlineData("a*b*c","((a*b)*c)")]
+	[InlineData("a*b/c","((a*b)/c)")]
+	[InlineData("a+b/c","(a+(b/c))")]
+	[InlineData("a+b*c+d/e-f","(((a+(b*c))+(d/e))-f)")]
+	[InlineData("3+4;-5*5","(3+4)((-5)*5)")]
+	[InlineData("5>4==3<4","((5>4)==(3<4))")]
+	[InlineData("5<4!=3>4","((5<4)!=(3>4))")]
+	[InlineData("3+4*5==3*1+4*5","((3+(4*5))==((3*1)+(4*5)))")]
+	public void OperatorPrecedence_OperatorsParsedWithCorrectPrecedence(string expression,
+		string expectedPrecedence)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+			
+		Assert.Equal(expectedPrecedence, ast.String());
+	}
+}
