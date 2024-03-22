@@ -55,6 +55,7 @@ public class Parser
 		RegisterPrefixFunction(Token.Minus, ParsePrefixExpression);
 		RegisterPrefixFunction(Token.True, ParseBooleanLiteral);
 		RegisterPrefixFunction(Token.False, ParseBooleanLiteral);
+		RegisterPrefixFunction(Token.LParen, ParseGroupedExpression);
 
 		_infixParsers = new Dictionary<string, ParseInfixFunc>();
 		RegisterInfixFunction(Token.Plus, ParseInfixExpression);
@@ -212,6 +213,19 @@ public class Parser
 	private IExpression ParseBooleanLiteral()
 	{
 		return new BooleanLiteral(token: _currentToken, value: IsCurrentToken(Token.True));
+	}
+
+	private IExpression? ParseGroupedExpression()
+	{
+		NextToken();
+		IExpression? expression = ParseExpression(TokenPrecedence.Lowest);
+
+		if (!ExpectPeek(Token.RParen))
+		{
+			return null;
+		}
+
+		return expression;
 	}
 
 	private IExpression ParsePrefixExpression()

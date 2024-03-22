@@ -516,6 +516,9 @@ public class OperatorPrecedenceTests
 	[InlineData("5>4==3<4","((5>4)==(3<4))")]
 	[InlineData("5<4!=3>4","((5<4)!=(3>4))")]
 	[InlineData("3+4*5==3*1+4*5","((3+(4*5))==((3*1)+(4*5)))")]
+	[InlineData("1+(2+3)+4","((1+(2+3))+4)")]
+	[InlineData("(5+5)*2","((5+5)*2)")]
+	[InlineData("!(true==true)","(!(true==true))")]
 	public void OperatorPrecedence_OperatorsParsedWithCorrectPrecedence(string expression,
 		string expectedPrecedence)
 	{
