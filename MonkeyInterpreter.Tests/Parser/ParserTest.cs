@@ -529,3 +529,124 @@ public class OperatorPrecedenceTests
 		Assert.Equal(expectedPrecedence, ast.String());
 	}
 }
+
+
+public class IfExpressionTests
+{
+	private ITestOutputHelper _output;
+	
+	public IfExpressionTests(ITestOutputHelper output)
+	{
+		_output = output;
+	}
+	
+	[Theory]
+	[InlineData("if (x < y) { x }", 1)]
+	public void IfExpression_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+		
+		Assert.Equal(expectedStatementCount, ast.Statements.Count);
+	}
+	
+	[Theory]
+	[InlineData("if (x < y) { x }")]
+	[InlineData("if (x < y) { x } else { y }")]
+	public void IfExpression_StatementIsExpressionStatement(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
+	}
+	
+	[Theory]
+	[InlineData("if (x < y) { x }")]
+	public void IfExpression_ExpressionStatementIsIfExpression(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+	
+		Assert.IsType<IfExpression>(expressionStatement.Expression);
+	}
+	
+	[Theory]
+	[InlineData("if (x < y) { x }", 1)]
+	public void IfExpression_ReturnsExpectedConsequenceStatementCount(string expression, int expectedStatementCount)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
+
+		Assert.Equal(expectedStatementCount, ifExpression.Consequence!.Statements!.Count);
+	}
+	
+	[Theory]
+	[InlineData("if (x < y) { x }")]
+	public void IfExpression_ConsequenceStatementIsExpressionStatement(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
+
+		Assert.IsType<ExpressionStatement>(ifExpression.Consequence!.Statements![0]);
+	}
+	
+	[Theory]
+	[InlineData("if (x < y) { x }", "x")]
+	public void IfExpression_ReturnsExpectedConsequenceExpression(string expression, string expectedConsequenceExpression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
+		ExpressionStatement consequenceExpressionStatement = (ExpressionStatement)ifExpression.Consequence!.Statements![0];
+
+		Assert.Equal(expectedConsequenceExpression, consequenceExpressionStatement.Expression.TokenLiteral());
+	}
+	
+	[Theory]
+	[InlineData("if (x < y) { x }")]
+	public void IfExpression_ReturnsNullAlternativeExpression(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
+		BlockStatement? alternative = ifExpression.Alternative;
+
+		Assert.Null(alternative);
+	}
+
+	[Theory]
+	[InlineData("if (x < y) { x } else { y }", "y")]
+	public void IfExpression_ReturnsExpectedAlternativeExpression(string expression, string expectedAlernativeStatement)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
+		ExpressionStatement alternativeStatement = (ExpressionStatement)ifExpression.Alternative!.Statements[0];
+		
+		Assert.Equal(expectedAlernativeStatement, alternativeStatement.TokenLiteral());
+		
+	}
+}
