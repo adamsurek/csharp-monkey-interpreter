@@ -6,6 +6,20 @@ namespace MonkeyInterpreter.Tests.Parser;
 
 // TODO: Consolidate tests - lots of repetition
 
+public class AstCollection
+{
+	public Core.Lexer Lexer;
+	public AST.Parser Parser;
+	public AbstractSyntaxTree Ast;
+	
+	public AstCollection(string expression)
+	{
+		Lexer = new Core.Lexer(expression);
+		Parser = new AST.Parser(Lexer);
+		Ast = Parser.ParseProgram();
+	}
+}
+
 public class LetStatementTestDataGenerator : IEnumerable<object[]>
 {
 	private readonly List<object[]> _data =
@@ -230,6 +244,58 @@ public class IntegerLiteralExpressionTests
 	}
 }
 
+public class BooleanLiteralTests
+{
+	[Theory]
+	[InlineData("true;", 1)]
+	public void BooleanLiteral_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+	
+		Assert.Equal(expectedStatementCount, ast.Statements.Count);
+	}
+
+	[Theory]
+	[InlineData("true;")]
+	public void BooleanLiteral_StatementIsExpressionStatement(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+	
+		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
+	}
+
+	[Theory]
+	[InlineData("true;")]
+	public void BooleanLiteral_ExpressionStatementExpressionIsIdentifier(string expression)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		
+		Assert.IsType<BooleanLiteral>(expressionStatement.Expression);
+	}
+
+	[Theory]
+	[InlineData("true;", true)]
+	public void BooleanLiteral_ReturnsExpectedValue(string expression, bool expectedValue)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		BooleanLiteral identifier = (BooleanLiteral)expressionStatement.Expression;
+
+		Assert.Equal(expectedValue, identifier.Value);
+	}
+	
+}
 public class PrefixOperatorTests
 {
 	[Theory]
