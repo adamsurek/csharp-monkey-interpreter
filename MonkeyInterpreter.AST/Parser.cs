@@ -56,6 +56,7 @@ public class Parser
 		RegisterPrefixFunction(Token.True, ParseBooleanLiteral);
 		RegisterPrefixFunction(Token.False, ParseBooleanLiteral);
 		RegisterPrefixFunction(Token.LParen, ParseGroupedExpression);
+		RegisterPrefixFunction(Token.If, ParseIfExpression);
 
 		_infixParsers = new Dictionary<string, ParseInfixFunc>();
 		RegisterInfixFunction(Token.Plus, ParseInfixExpression);
@@ -226,6 +227,66 @@ public class Parser
 		}
 
 		return expression;
+	}
+
+	private IExpression? ParseIfExpression()
+	{
+		IfExpression expression = new (_currentToken);
+
+		if (!ExpectPeek(Token.LParen))
+		{
+			return null;
+		}
+		
+		NextToken();
+		expression.Condition = ParseExpression(TokenPrecedence.Lowest);
+
+		if (!ExpectPeek(Token.RParen))
+		{
+			return null;
+		}
+		
+		if (!ExpectPeek(Token.LBrace))
+		{
+			return null;
+		}
+
+		expression.Consequence = ParseBlockStatement();
+
+		if (IsPeekToken(Token.Else))
+		{
+			NextToken();
+
+			if (!ExpectPeek(Token.LBrace))
+			{
+				return null;
+			}
+
+			expression.Alternative = ParseBlockStatement();
+		}
+
+		return expression;
+	}
+
+	private BlockStatement ParseBlockStatement()
+	{
+		BlockStatement blockStatement = new BlockStatement(_currentToken, new List<IStatement>());
+		
+		NextToken();
+
+		while (!IsCurrentToken(Token.RBrace) && !IsCurrentToken(Token.Eof))
+		{
+			IStatement? statement = ParseStatement();
+
+			if (statement is not null)
+			{
+				blockStatement.Statements.Add(statement);
+			}
+			
+			NextToken();
+		}
+
+		return blockStatement;
 	}
 
 	private IExpression ParsePrefixExpression()
