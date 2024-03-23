@@ -647,6 +647,109 @@ public class IfExpressionTests
 		ExpressionStatement alternativeStatement = (ExpressionStatement)ifExpression.Alternative!.Statements[0];
 		
 		Assert.Equal(expectedAlernativeStatement, alternativeStatement.TokenLiteral());
+	}
+}
+
+public class FunctionLiteralTests
+{
+	[Theory]
+	[InlineData("fn(x, y) { x + y; }", 1)]
+	public void FunctionLiteral_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
 		
+		Assert.Equal(expectedStatementCount, ast.Statements.Count);
+	}
+	
+	[Theory]
+	[InlineData("fn(x, y) { x + y; }")]
+	public void FunctionLiteral_StatementIsExpressionStatement(string expression)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+		
+		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
+	}
+	
+	[Theory]
+	[InlineData("fn(x, y) { x + y; }")]
+	public void FunctionLiteral_ExpressionIsFunctionLiteral(string expression)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		
+		Assert.IsType<FunctionLiteral>(expressionStatement.Expression);
+	}
+	
+	[Theory]
+	[InlineData("fn(x, y) { x + y; }", 2)]
+	public void FunctionLiteral_ReturnsCorrectParamCount(string expression, int expectedParamCount)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
+		
+		Assert.Equal(expectedParamCount, functionLiteral.Parameters.Count);
+	}
+	
+	[Theory]
+	[InlineData("fn(x, y) { x + y; }", 1)]
+	public void FunctionLiteral_BodyStatementIsExpressionStatement(string expression, int expectedStatementCount)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
+		ExpressionStatement bodyStatement = (ExpressionStatement)functionLiteral.Body.Statements[0];
+		
+		Assert.IsType<ExpressionStatement>(functionLiteral.Body.Statements[0]);
+		
+		
+	}
+
+	[Theory]
+	[InlineData("fn(x, y) { x + y; }", "(x+y)")]
+	public void FunctionLiteral_ReturnsExpectedBodyExpression(string expression, string expectedParsedStatement)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
+		ExpressionStatement bodyStatement = (ExpressionStatement)functionLiteral.Body!.Statements[0];
+	
+		Assert.Equal(expectedParsedStatement, bodyStatement.String());
+	}
+	
+	[Theory]
+	[InlineData("fn(x, y) { x + y; }", new[] {"x", "y"})]
+	public void FunctionLiteral_ReturnsExpectedParameters(string expression, string[] expectedParsedStatement)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
+
+		List<string> parameters = new();
+		foreach (Identifier identifier in functionLiteral.Parameters)
+		{
+			parameters.Add(identifier.Value);
+		}
+		
+		Assert.Equal(expectedParsedStatement, parameters.ToArray());
 	}
 }
