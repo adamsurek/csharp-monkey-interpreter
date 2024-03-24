@@ -1,4 +1,5 @@
-﻿using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.AST;
+using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.REPL;
 
@@ -13,23 +14,33 @@ public static class Repl
 			writer.Write(Prompt);
 			string? line = reader.ReadLine();
 
-			Console.WriteLine($"'{line}'");
-			
 			if (line is null)
 			{
 				return;
 			}
 			
-			Lexer lexer = new Lexer(line!);
+			Lexer lexer = new(line!);
+			Parser parser = new(lexer);
+			AbstractSyntaxTree ast = parser.ParseProgram();
 
-			while (lexer.Character.ToString() != Token.Eof)
+			List<string> errors = parser.Errors();
+
+			if (errors.Count() != 0)
 			{
-				Token? token = lexer.NextToken();
-				if (token is not null)
-				{
-					writer.WriteLine($"Literal: {token.Literal}, Type: {token.Type}");
-				}
+				PrintParserErrors(writer, errors);
+				continue;
 			}
+
+			writer.WriteLine(ast.String());
+			writer.WriteLine();
+		}
+	}
+
+	private static void PrintParserErrors(TextWriter writer, List<string> errors)
+	{
+		foreach (string error in errors)
+		{
+			writer.WriteLine($"\t{error}");
 		}
 	}
 }
