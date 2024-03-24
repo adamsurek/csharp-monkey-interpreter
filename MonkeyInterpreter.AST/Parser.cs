@@ -39,6 +39,7 @@ public class Parser
 		{ Token.Minus, TokenPrecedence.Sum },
 		{ Token.Slash, TokenPrecedence.Product },
 		{ Token.Asterisk, TokenPrecedence.Product },
+		{ Token.LParen, TokenPrecedence.Call },
 	};
 
 	public Parser(Lexer lexer)
@@ -68,7 +69,7 @@ public class Parser
 		RegisterInfixFunction(Token.NEqual, ParseInfixExpression);
 		RegisterInfixFunction(Token.LThan, ParseInfixExpression);
 		RegisterInfixFunction(Token.GThan, ParseInfixExpression);
-		
+		RegisterInfixFunction(Token.LParen, ParseCallExpression);
 	}
 
 	public AbstractSyntaxTree ParseProgram()
@@ -157,7 +158,11 @@ public class Parser
 			return null;
 		}
 
-		while (!IsCurrentToken(Token.Semicolon))
+		NextToken();
+
+		letStatement.Value = ParseExpression(TokenPrecedence.Lowest);
+
+		if (IsPeekToken(Token.Semicolon))
 		{
 			NextToken();
 		}
@@ -170,7 +175,9 @@ public class Parser
 		ReturnStatement returnStatement = new(_currentToken);
 		NextToken();
 
-		while (!IsCurrentToken(Token.Semicolon))
+		returnStatement.ReturnValue = ParseExpression(TokenPrecedence.Lowest);
+
+		if (IsPeekToken(Token.Semicolon))
 		{
 			NextToken();
 		}
@@ -289,6 +296,7 @@ public class Parser
 
 		return functionLiteral;
 	}
+	
 
 	private BlockStatement ParseBlockStatement()
 	{
@@ -341,6 +349,39 @@ public class Parser
 		}
 
 		return identifiers;
+	}
+
+	public IExpression ParseCallExpression(IExpression function)
+	{
+		return new CallExpression(_currentToken, function, ParseCallArguments());
+	}
+
+	public List<IExpression?>? ParseCallArguments()
+	{
+		List<IExpression?> arguments = new();
+
+		if (IsPeekToken(Token.RParen))
+		{
+			NextToken();
+			return arguments;
+		}
+		
+		NextToken();
+		arguments.Add(ParseExpression(TokenPrecedence.Lowest));
+
+		while (IsPeekToken(Token.Comma))
+		{
+			NextToken();
+			NextToken();
+			arguments.Add(ParseExpression(TokenPrecedence.Lowest));
+		}
+
+		if (!ExpectPeek(Token.RParen))
+		{
+			return null;
+		}
+
+		return arguments;
 	}
 
 	private IExpression ParsePrefixExpression()
