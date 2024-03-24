@@ -519,6 +519,9 @@ public class OperatorPrecedenceTests
 	[InlineData("1+(2+3)+4","((1+(2+3))+4)")]
 	[InlineData("(5+5)*2","((5+5)*2)")]
 	[InlineData("!(true==true)","(!(true==true))")]
+	[InlineData("a+add(b*c)+d","((a+add((b*c)))+d)")]
+	[InlineData("add(a,b,1,2*3,4+5,add(6,7*8))","add(a, b, 1, (2*3), (4+5), add(6, (7*8)))")]
+	[InlineData("add(a+b+c*d/f+g)","add((((a+b)+((c*d)/f))+g))")]
 	public void OperatorPrecedence_OperatorsParsedWithCorrectPrecedence(string expression,
 		string expectedPrecedence)
 	{
@@ -748,6 +751,92 @@ public class FunctionLiteralTests
 		foreach (Identifier identifier in functionLiteral.Parameters)
 		{
 			parameters.Add(identifier.Value);
+		}
+		
+		Assert.Equal(expectedParsedStatement, parameters.ToArray());
+	}
+}
+
+public class CallExpressionTests
+{
+	[Theory]
+	[InlineData("add(1, 2 * 3, 4 + 5);", 1)]
+	public void CallExpression_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+		
+		Assert.Equal(expectedStatementCount, ast.Statements.Count);
+	}
+	
+	[Theory]
+	[InlineData("add(1, 2 * 3, 4 + 5);")]
+	public void CallExpression_StatementIsExpressionStatement(string expression)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+		
+		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
+	}
+	
+	[Theory]
+	[InlineData("add(1, 2 * 3, 4 + 5);")]
+	public void CallExpression_ExpressionIsCallExpression(string expression)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		
+		Assert.IsType<CallExpression>(expressionStatement.Expression);
+	}
+	
+	[Theory]
+	[InlineData("add(1, 2 * 3, 4 + 5);", "add")]
+	public void CallExpression_ReturnsExpectedFunctionIdentifier(string expression, string expectedIdentifier)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		CallExpression callExpression = (CallExpression)expressionStatement.Expression;
+		
+		Assert.Equal(expectedIdentifier, callExpression.Function.String());
+	}
+	
+	[Theory]
+	[InlineData("add(1, 2 * 3, 4 + 5);", 3)]
+	public void CallExpression_ReturnsCorrectParamCount(string expression, int expectedParamCount)
+	{	
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		CallExpression callExpression = (CallExpression)expressionStatement.Expression;
+		
+		Assert.Equal(expectedParamCount, callExpression.Arguments.Count);
+	}
+
+	[Theory]
+	[InlineData("add(1, 2 * 3, 4 + 5);", new[] {"1", "(2*3)", "(4+5)"})]
+	public void CallExpression_ReturnsExpectedParameters(string expression, string[] expectedParsedStatement)
+	{
+		Core.Lexer lexer = new(expression);
+		AST.Parser parser = new(lexer);
+		AbstractSyntaxTree ast = parser.ParseProgram();
+
+		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
+		CallExpression callExpression = (CallExpression)expressionStatement.Expression;
+
+		List<string> parameters = new();
+		foreach (IExpression argument in callExpression.Arguments)
+		{
+			parameters.Add(argument.String());
 		}
 		
 		Assert.Equal(expectedParsedStatement, parameters.ToArray());
