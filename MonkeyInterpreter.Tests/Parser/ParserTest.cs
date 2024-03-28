@@ -374,7 +374,7 @@ public class IfExpressionTests
 	
 	[Theory]
 	[InlineData("if (x < y) { x }")]
-	public void IfExpression_ConsequenceStatementIsExpressionStatement(string expression)
+	public void IfExpression_ConsequenceStatementsAreExpressionStatements(string expression)
 	{
 		Program program = new(expression);
 
@@ -382,56 +382,73 @@ public class IfExpressionTests
 			.Select(statement => (ExpressionStatement)statement).ToList();
 		List<IfExpression> ifExpressions = expressionStatements
 			.Select(statement => (IfExpression)statement.Expression).ToList();
-		List<IStatement> consequenceStatements = ifExpressions
-			.Select(statement => (IStatement)statement.Consequence!.Statements).ToList();
+		List<BlockStatement> consequences = ifExpressions
+			.Select(statement => statement.Consequence!).ToList();
+		List<List<IStatement>> consequenceStatements = consequences
+			.Select(statement => statement.Statements).ToList();
+		
 		
 		Assert.All(consequenceStatements,
-			consequenceStatement => Assert.IsType<ExpressionStatement>(consequenceStatement));
+			consequenceStatement => Assert.All(consequenceStatement,
+				statement => Assert.IsType<ExpressionStatement>(statement) ));
 	}
 	
 	[Theory]
 	[InlineData("if (x < y) { x }", "x")]
 	public void IfExpression_ReturnsExpectedConsequenceExpression(string expression, string expectedConsequenceExpression)
 	{
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
-		ExpressionStatement consequenceExpressionStatement = (ExpressionStatement)ifExpression.Consequence!.Statements![0];
-
-		Assert.Equal(expectedConsequenceExpression, consequenceExpressionStatement.Expression.TokenLiteral());
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<IfExpression> ifExpressions = expressionStatements
+			.Select(statement => (IfExpression)statement.Expression).ToList();
+		List<BlockStatement> consequences = ifExpressions
+			.Select(statement => statement.Consequence!).ToList();
+		List<List<IStatement>> consequenceStatements = consequences
+			.Select(statement => statement.Statements).ToList();
+		
+		
+		Assert.All(consequenceStatements,
+			consequenceStatement => Assert.All(consequenceStatement,
+				statement => Assert.Equal(expectedConsequenceExpression, statement.TokenLiteral())));
 	}
 	
 	[Theory]
 	[InlineData("if (x < y) { x }")]
 	public void IfExpression_ReturnsNullAlternativeExpression(string expression)
 	{
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
-		BlockStatement? alternative = ifExpression.Alternative;
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<IfExpression> ifExpressions = expressionStatements
+			.Select(statement => (IfExpression)statement.Expression).ToList();
+		List<BlockStatement?> alternatives = ifExpressions
+			.Select(statement => statement.Alternative).ToList();
 
-		Assert.Null(alternative);
+		Assert.All(alternatives,
+			Assert.Null);
 	}
 
 	[Theory]
 	[InlineData("if (x < y) { x } else { y }", "y")]
-	public void IfExpression_ReturnsExpectedAlternativeExpression(string expression, string expectedAlernativeStatement)
+	public void IfExpression_ReturnsExpectedAlternativeExpression(string expression, string expectedAlternativeStatement)
 	{
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		IfExpression ifExpression = (IfExpression)expressionStatement.Expression;
-		ExpressionStatement alternativeStatement = (ExpressionStatement)ifExpression.Alternative!.Statements[0];
-		
-		Assert.Equal(expectedAlernativeStatement, alternativeStatement.TokenLiteral());
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<IfExpression> ifExpressions = expressionStatements
+			.Select(statement => (IfExpression)statement.Expression).ToList();
+		List<BlockStatement> alternatives = ifExpressions
+			.Select(statement => statement.Alternative!).ToList();
+		List<List<IStatement>> alternativeStatements = alternatives
+			.Select(statement => statement.Statements).ToList();
+
+		Assert.All(alternativeStatements,
+			consequenceStatement => Assert.All(consequenceStatement,
+				statement => Assert.Equal(expectedAlternativeStatement, statement.TokenLiteral())));
 	}
 }
 
