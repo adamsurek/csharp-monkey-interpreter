@@ -1,10 +1,10 @@
 ﻿using System.Collections;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Xunit.Abstractions;
 using MonkeyInterpreter.AST;
 
 namespace MonkeyInterpreter.Tests.Parser;
-
-// TODO: Consolidate tests - lots of repetition
 
 public class Program
 {
@@ -55,6 +55,8 @@ public class GenericTests
 	[InlineData("5 == 5;", 1)]
 	[InlineData("5 != 5;", 1)]
 	[InlineData("if (x < y) { x }", 1)]
+	[InlineData("fn(x, y) { x + y; }", 1)]
+	[InlineData("add(1, 2 * 3, 4 + 5);", 1)]
 	public void AbstractSyntaxTree_Statements_CountIsExpected(string expression, int expectedStatementCount)
 	{
 		Program program = new(expression);
@@ -68,6 +70,8 @@ public class GenericTests
 	[InlineData("5;")]
 	[InlineData("!5;")]
 	[InlineData("-15;")]
+	[InlineData("fn(x, y) { x + y; }")]
+	[InlineData("add(1, 2 * 3, 4 + 5);")]
 	public void AbstractSyntaxTree_Statements_AreExpressionStatements(string expression)
 	{
 		Program program = new(expression);
@@ -102,6 +106,8 @@ public class GenericTests
 	[InlineData("5 != 5;", typeof(InfixExpression))]
 	[InlineData("if (x < y) { x }", typeof(IfExpression))]
 	[InlineData("if (x < y) { x } else { y }", typeof(IfExpression))]
+	[InlineData("fn(x, y) { x + y; }", typeof(FunctionLiteral))]
+	[InlineData("add(1, 2 * 3, 4 + 5);", typeof(CallExpression))]
 	public void AbstractSyntaxTree_Expressions_AreExpectedTypes(string expression, Type expectedType)
 	{
 		Program program = new(expression);
@@ -365,13 +371,6 @@ public class OperatorPrecedenceTests
 
 public class IfExpressionTests
 {
-	private ITestOutputHelper _output;
-	
-	public IfExpressionTests(ITestOutputHelper output)
-	{
-		_output = output;
-	}
-	
 	[Theory]
 	[InlineData("if (x < y) { x }")]
 	public void IfExpression_ConsequenceStatementsAreExpressionStatements(string expression)
@@ -455,189 +454,120 @@ public class IfExpressionTests
 public class FunctionLiteralTests
 {
 	[Theory]
-	[InlineData("fn(x, y) { x + y; }", 1)]
-	public void FunctionLiteral_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
-	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
-		
-		Assert.Equal(expectedStatementCount, ast.Statements.Count);
-	}
-	
-	[Theory]
-	[InlineData("fn(x, y) { x + y; }")]
-	public void FunctionLiteral_StatementIsExpressionStatement(string expression)
-	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
-		
-		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
-	}
-	
-	[Theory]
-	[InlineData("fn(x, y) { x + y; }")]
-	public void FunctionLiteral_ExpressionIsFunctionLiteral(string expression)
-	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
-
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		
-		Assert.IsType<FunctionLiteral>(expressionStatement.Expression);
-	}
-	
-	[Theory]
 	[InlineData("fn(x, y) { x + y; }", 2)]
 	public void FunctionLiteral_ReturnsCorrectParamCount(string expression, int expectedParamCount)
 	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<FunctionLiteral> functionLiterals = expressionStatements
+			.Select(statement => (FunctionLiteral)statement.Expression).ToList();
 		
-		Assert.Equal(expectedParamCount, functionLiteral.Parameters.Count);
+		Assert.All(functionLiterals,
+			functionLiteral => Assert.Equal(expectedParamCount, functionLiteral.Parameters!.Count));
 	}
 	
 	[Theory]
 	[InlineData("fn(x, y) { x + y; }")]
 	public void FunctionLiteral_BodyStatementIsExpressionStatement(string expression)
 	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
-		ExpressionStatement bodyStatement = (ExpressionStatement)functionLiteral.Body.Statements[0];
-		
-		Assert.IsType<ExpressionStatement>(functionLiteral.Body.Statements[0]);
-		
-		
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<FunctionLiteral> functionLiterals = expressionStatements
+			.Select(statement => (FunctionLiteral)statement.Expression).ToList();
+		List<List<IStatement>> bodyStatements = functionLiterals
+			.Select(statement => statement.Body!.Statements).ToList();
+
+		Assert.All(bodyStatements,
+			bodyStatement => Assert.All(bodyStatement,
+				statement => Assert.IsType<ExpressionStatement>(statement)));
 	}
 
 	[Theory]
 	[InlineData("fn(x, y) { x + y; }", "(x+y)")]
 	public void FunctionLiteral_ReturnsExpectedBodyExpression(string expression, string expectedParsedStatement)
 	{
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
-		ExpressionStatement bodyStatement = (ExpressionStatement)functionLiteral.Body!.Statements[0];
-	
-		Assert.Equal(expectedParsedStatement, bodyStatement.String());
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<FunctionLiteral> functionLiterals = expressionStatements
+			.Select(statement => (FunctionLiteral)statement.Expression).ToList();
+		List<List<IStatement>> bodyStatements = functionLiterals
+			.Select(statement => statement.Body!.Statements).ToList();
+
+		Assert.All(bodyStatements,
+			bodyStatement => Assert.All(bodyStatement,
+				statement => Assert.Equal(expectedParsedStatement, statement.String())));
 	}
 	
 	[Theory]
 	[InlineData("fn(x, y) { x + y; }", new[] {"x", "y"})]
-	public void FunctionLiteral_ReturnsExpectedParameters(string expression, string[] expectedParsedStatement)
+	public void FunctionLiteral_ReturnsExpectedParameters(string expression, string[] expectedParameters)
 	{
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		FunctionLiteral functionLiteral = (FunctionLiteral)expressionStatement.Expression;
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<FunctionLiteral> functionLiterals = expressionStatements
+			.Select(statement => (FunctionLiteral)statement.Expression).ToList();
+		List<List<Identifier>?> identifierParameters = functionLiterals
+			.Select(literals => literals.Parameters).ToList();
 
-		List<string> parameters = new();
-		foreach (Identifier identifier in functionLiteral.Parameters)
-		{
-			parameters.Add(identifier.Value);
-		}
-		
-		Assert.Equal(expectedParsedStatement, parameters.ToArray());
+		Assert.All(identifierParameters,
+			identifier => Assert.Equal(expectedParameters, identifier
+				.Select(param => param.TokenLiteral())));
 	}
 }
 
 public class CallExpressionTests
 {
 	[Theory]
-	[InlineData("add(1, 2 * 3, 4 + 5);", 1)]
-	public void CallExpression_ReturnsExpectedStatementCount(string expression, int expectedStatementCount)
-	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
-		
-		Assert.Equal(expectedStatementCount, ast.Statements.Count);
-	}
-	
-	[Theory]
-	[InlineData("add(1, 2 * 3, 4 + 5);")]
-	public void CallExpression_StatementIsExpressionStatement(string expression)
-	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
-		
-		Assert.IsType<ExpressionStatement>(ast.Statements[0]);
-	}
-	
-	[Theory]
-	[InlineData("add(1, 2 * 3, 4 + 5);")]
-	public void CallExpression_ExpressionIsCallExpression(string expression)
-	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
-
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		
-		Assert.IsType<CallExpression>(expressionStatement.Expression);
-	}
-	
-	[Theory]
 	[InlineData("add(1, 2 * 3, 4 + 5);", "add")]
 	public void CallExpression_ReturnsExpectedFunctionIdentifier(string expression, string expectedIdentifier)
 	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		CallExpression callExpression = (CallExpression)expressionStatement.Expression;
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<CallExpression> callExpressions = expressionStatements
+			.Select(statement => (CallExpression)statement.Expression).ToList();
 		
-		Assert.Equal(expectedIdentifier, callExpression.Function.String());
+		Assert.All(callExpressions,
+			callExpression => Assert.Equal(expectedIdentifier, callExpression.Function.String()));
 	}
 	
 	[Theory]
 	[InlineData("add(1, 2 * 3, 4 + 5);", 3)]
 	public void CallExpression_ReturnsCorrectParamCount(string expression, int expectedParamCount)
 	{	
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		CallExpression callExpression = (CallExpression)expressionStatement.Expression;
-		
-		Assert.Equal(expectedParamCount, callExpression.Arguments.Count);
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<CallExpression> callExpressions = expressionStatements
+			.Select(statement => (CallExpression)statement.Expression).ToList();
+	
+		Assert.All(callExpressions, 
+			callExpression => Assert.Equal(expectedParamCount, callExpression.Arguments!.Count));
 	}
 
 	[Theory]
 	[InlineData("add(1, 2 * 3, 4 + 5);", new[] {"1", "(2*3)", "(4+5)"})]
-	public void CallExpression_ReturnsExpectedParameters(string expression, string[] expectedParsedStatement)
+	public void CallExpression_ReturnsExpectedParameters(string expression, string[] expectedParameters)
 	{
-		Core.Lexer lexer = new(expression);
-		AST.Parser parser = new(lexer);
-		AbstractSyntaxTree ast = parser.ParseProgram();
+		Program program = new(expression);
 
-		ExpressionStatement expressionStatement = (ExpressionStatement)ast.Statements[0];
-		CallExpression callExpression = (CallExpression)expressionStatement.Expression;
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+		List<CallExpression> callExpressions = expressionStatements
+			.Select(statement => (CallExpression)statement.Expression).ToList();
 
-		List<string> parameters = new();
-		foreach (IExpression argument in callExpression.Arguments)
-		{
-			parameters.Add(argument.String());
-		}
-		
-		Assert.Equal(expectedParsedStatement, parameters.ToArray());
+		Assert.All(callExpressions,
+			callExpression => Assert.Equal(expectedParameters, callExpression.Arguments!
+				.Select(argument => argument.String())));
 	}
 }
