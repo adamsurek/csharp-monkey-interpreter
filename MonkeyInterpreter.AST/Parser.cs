@@ -177,7 +177,8 @@ public class Parser
 
 	private ReturnStatement? ParseReturnStatement()
 	{
-		ReturnStatement returnStatement = new(_currentToken);
+		Token currentToken = _currentToken;
+		
 		NextToken();
 		
 		IExpression? value = ParseExpression(TokenPrecedence.Lowest);
@@ -187,14 +188,12 @@ public class Parser
 			return null;
 		}
 
-		returnStatement.ReturnValue = value;
-
 		if (IsPeekToken(Token.Semicolon))
 		{
 			NextToken();
 		}
 
-		return returnStatement;
+		return new ReturnStatement(currentToken, value);
 	}
 	
 	private ExpressionStatement? ParseExpressionStatement()
