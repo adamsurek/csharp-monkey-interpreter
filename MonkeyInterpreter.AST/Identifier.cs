@@ -4,8 +4,8 @@ namespace MonkeyInterpreter.AST;
 
 public struct Identifier : IExpression
 {
-	public Token Token { get; set; }
-	public string Value { get; set; }
+	public Token Token;
+	public string Value;
 	
 	public Identifier(Token token, string value)
 	{

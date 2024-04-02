@@ -5,24 +5,25 @@ namespace MonkeyInterpreter.AST;
 
 public class BlockStatement : IExpression
 {
-	public Token Token;
-	public List<IStatement> Statements;
+	private readonly Token _token;
+	
+	public readonly List<IStatement> Statements;
 
 	public BlockStatement(Token token, List<IStatement> statements)
 	{
-		Token = token;
+		_token = token;
 		Statements = statements;
 	}
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()
 	{
 		StringBuilder stringBuilder = new();
 
-		foreach (var statement in Statements)
+		foreach (IStatement statement in Statements)
 		{
 			stringBuilder.Append(statement.String());
 		}
