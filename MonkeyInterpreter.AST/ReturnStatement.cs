@@ -7,7 +7,7 @@ public class ReturnStatement : IStatement
 {
 	private readonly Token _token;
 	
-	public IExpression ReturnValue;
+	public readonly IExpression ReturnValue;
 
 	public ReturnStatement(Token token, IExpression returnValue)
 	{
