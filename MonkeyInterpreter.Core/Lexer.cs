@@ -13,9 +13,9 @@ public class Lexer
 		ReadCharacter();
 	}
 	
-	public Token? NextToken()
+	public Token NextToken()
 	{
-		Token token = new Token(Token.Illegal, "\0");
+		Token token = new(Token.Illegal, "\0");
 		
 		SkipWhitespace();
 		

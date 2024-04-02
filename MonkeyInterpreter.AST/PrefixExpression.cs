@@ -5,13 +5,21 @@ namespace MonkeyInterpreter.AST;
 
 public class PrefixExpression : IExpression
 {
-	public Token Token;
-	public string Operator;
-	public IExpression Right;
+	private readonly Token _token;
+	
+	public readonly string Operator;
+	public readonly IExpression Right;
+
+	public PrefixExpression(Token token, string @operator, IExpression right)
+	{
+		_token = token;
+		Operator = @operator;
+		Right = right;
+	}
 
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()

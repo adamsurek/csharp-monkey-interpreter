@@ -5,29 +5,26 @@ namespace MonkeyInterpreter.AST;
 
 public class ReturnStatement : IStatement
 {
-	public Token Token { get; set; }
-	public IExpression ReturnValue { get; set; }
+	private readonly Token _token;
+	
+	public readonly IExpression ReturnValue;
 
-	public ReturnStatement(Token token)
+	public ReturnStatement(Token token, IExpression returnValue)
 	{
-		Token = token;
+		_token = token;
+		ReturnValue = returnValue;
 	}
 
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()
 	{
 		StringBuilder stringBuilder = new();
 		stringBuilder.Append(TokenLiteral() + " ");
-
-		if (ReturnValue is not null)
-		{
-			stringBuilder.Append(ReturnValue.String());
-		}
-
+		stringBuilder.Append(ReturnValue.String());
 		stringBuilder.Append(';');
 		return stringBuilder.ToString();
 	}

@@ -5,20 +5,21 @@ namespace MonkeyInterpreter.AST;
 
 public class CallExpression : IExpression
 {
-	public Token Token;
-	public IExpression Function;
-	public List<IExpression>? Arguments;
+	private readonly Token _token;
+	
+	public readonly IExpression Function;
+	public readonly List<IExpression?> Arguments;
 
-	public CallExpression(Token token, IExpression function, List<IExpression> arguments)
+	public CallExpression(Token token, IExpression function, List<IExpression?> arguments)
 	{
-		Token = token;
+		_token = token;
 		Function = function;
 		Arguments = arguments;
 	}
 
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()
@@ -27,9 +28,12 @@ public class CallExpression : IExpression
 
 		List<string> arguments = new();
 
-		foreach (IExpression argument in Arguments)
+		foreach (IExpression? argument in Arguments)
 		{
-			arguments.Add(argument.String());
+			if (argument is not null)
+			{
+				arguments.Add(argument.String());
+			}
 		}
 
 		stringBuilder.Append(Function.String());

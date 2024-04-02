@@ -5,19 +5,23 @@ namespace MonkeyInterpreter.AST;
 
 public class IfExpression : IExpression
 {
-	public Token Token;
-	public IExpression? Condition;
-	public BlockStatement? Consequence;
-	public BlockStatement? Alternative;
+	private readonly Token _token;
+	
+	public readonly IExpression Condition;
+	public readonly BlockStatement Consequence;
+	public readonly BlockStatement? Alternative;
 
-	public IfExpression(Token token)
+	public IfExpression(Token token, IExpression condition, BlockStatement consequence, BlockStatement? alternative = null)
 	{
-		Token = token;
+		_token = token;
+		Condition = condition;
+		Consequence = consequence;
+		Alternative = alternative;
 	}
 
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()

@@ -4,22 +4,22 @@ namespace MonkeyInterpreter.AST;
 
 public class BooleanLiteral : IExpression
 {
-	public Token Token;
-	public bool Value;
+	private readonly Token _token;
+	public readonly bool Value;
 
 	public BooleanLiteral(Token token, bool value)
 	{
-		Token = token;
+		_token = token;
 		Value = value;
 	}
 
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 }

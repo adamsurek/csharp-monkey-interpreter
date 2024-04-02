@@ -3,18 +3,25 @@ using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.AST;
 
-// TODO: Create proper constructor
-
 public class InfixExpression : IExpression
 {
-	public Token Token;
-	public IExpression Left;
-	public IExpression Right;
-	public string Operator;
+	private readonly Token _token;
+	
+	public readonly IExpression Left;
+	public readonly IExpression Right;
+	public readonly string Operator;
+
+	public InfixExpression(Token token, IExpression left, string @operator, IExpression right)
+	{
+		_token = token;
+		Left = left;
+		Operator = @operator;
+		Right = right;
+	}
 
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()

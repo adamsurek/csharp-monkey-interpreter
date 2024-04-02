@@ -2,7 +2,6 @@
 
 namespace MonkeyInterpreter.AST;
 
-// TODO: Handle nulls
 // TODO: Add method XML comments
 
 public enum TokenPrecedence
@@ -20,16 +19,16 @@ public class Parser
 {
 	private Token _currentToken;
 	private Token _peekToken;
-	private Lexer _lexer;
-	private List<string> _errors;
+	private readonly Lexer _lexer;
+	private readonly List<string> _errors;
 
-	private delegate IExpression ParsePrefixFunc();
-	private delegate IExpression ParseInfixFunc(IExpression expression);
+	private delegate IExpression? ParsePrefixFunc();
+	private delegate IExpression? ParseInfixFunc(IExpression expression);
 
-	private Dictionary<string, ParsePrefixFunc> _prefixParsers;
-	private Dictionary<string, ParseInfixFunc> _infixParsers;
+	private readonly Dictionary<string, ParsePrefixFunc> _prefixParsers;
+	private readonly Dictionary<string, ParseInfixFunc> _infixParsers;
 
-	public Dictionary<string, TokenPrecedence> TokenPrecedenceCategoryMap = new()
+	private readonly Dictionary<string, TokenPrecedence> _tokenPrecedenceCategoryMap = new()
 	{
 		{ Token.Equal, TokenPrecedence.Equals },
 		{ Token.NEqual, TokenPrecedence.Equals },
@@ -120,7 +119,12 @@ public class Parser
 			return null;
 		}
 
-		IExpression leftExpression = prefixFunc.Invoke();
+		IExpression? leftExpression = prefixFunc.Invoke();
+
+		if (leftExpression is null)
+		{
+			return null;
+		}
 
 		while (!IsPeekToken(Token.Semicolon) && precedence < PeekPrecedence())
 		{
@@ -132,7 +136,7 @@ public class Parser
 			}
 			
 			NextToken();
-			leftExpression = infixFunc.Invoke(leftExpression);
+			leftExpression = infixFunc.Invoke(leftExpression!);
 		}
 
 		return leftExpression;
@@ -140,18 +144,14 @@ public class Parser
 
 	private LetStatement? ParseLetStatement()
 	{
-		LetStatement letStatement = new(_currentToken);
+		Token currentToken = _currentToken;
 
 		if (!ExpectPeek(Token.Ident))
 		{
 			return null;
 		}
 
-		letStatement.Name = new Identifier()
-		{
-			Token = _currentToken,
-			Value = _currentToken.Literal
-		};
+		Identifier name = new(_currentToken, _currentToken.Literal);
 
 		if (!ExpectPeek(Token.Assign))
 		{
@@ -159,36 +159,55 @@ public class Parser
 		}
 
 		NextToken();
+		
+		IExpression? value = ParseExpression(TokenPrecedence.Lowest);
 
-		letStatement.Value = ParseExpression(TokenPrecedence.Lowest);
+		if (value is null)
+		{
+			return null;
+		}
 
 		if (IsPeekToken(Token.Semicolon))
 		{
 			NextToken();
 		}
 
-		return letStatement;
+		return new LetStatement(currentToken, name, value);
 	}
 
-	private ReturnStatement ParseReturnStatement()
+	private ReturnStatement? ParseReturnStatement()
 	{
-		ReturnStatement returnStatement = new(_currentToken);
+		Token currentToken = _currentToken;
+		
 		NextToken();
+		
+		IExpression? value = ParseExpression(TokenPrecedence.Lowest);
 
-		returnStatement.ReturnValue = ParseExpression(TokenPrecedence.Lowest);
+		if (value is null)
+		{
+			return null;
+		}
 
 		if (IsPeekToken(Token.Semicolon))
 		{
 			NextToken();
 		}
 
-		return returnStatement;
+		return new ReturnStatement(currentToken, value);
 	}
 	
 	private ExpressionStatement? ParseExpressionStatement()
 	{
 		ExpressionStatement expressionStatement = new(_currentToken);
-		expressionStatement.Expression = ParseExpression(TokenPrecedence.Lowest);
+		
+		IExpression? expression = ParseExpression(TokenPrecedence.Lowest);
+
+		if (expression is null)
+		{
+			return null;
+		}
+		
+		expressionStatement.Expression = expression;
 
 		if (IsPeekToken(Token.Semicolon))
 		{
@@ -205,10 +224,7 @@ public class Parser
 
 	private IExpression? ParseIntegerLiteral()
 	{
-		IntegerLiteral integerLiteral = new()
-		{
-			Token = _currentToken
-		};
+		IntegerLiteral integerLiteral = new(_currentToken);
 
 		if (!int.TryParse(_currentToken.Literal, out integerLiteral.Value))
 		{
@@ -239,16 +255,22 @@ public class Parser
 
 	private IExpression? ParseIfExpression()
 	{
-		IfExpression expression = new (_currentToken);
-
+		Token currentToken = _currentToken;
+		
 		if (!ExpectPeek(Token.LParen))
 		{
 			return null;
 		}
 		
 		NextToken();
-		expression.Condition = ParseExpression(TokenPrecedence.Lowest);
+		
+		IExpression? condition = ParseExpression(TokenPrecedence.Lowest);
 
+		if (condition is null)
+		{
+			return null;
+		}
+		
 		if (!ExpectPeek(Token.RParen))
 		{
 			return null;
@@ -258,8 +280,9 @@ public class Parser
 		{
 			return null;
 		}
-
-		expression.Consequence = ParseBlockStatement();
+		
+		BlockStatement consequence = ParseBlockStatement();
+		BlockStatement? alternative = null;
 
 		if (IsPeekToken(Token.Else))
 		{
@@ -270,8 +293,11 @@ public class Parser
 				return null;
 			}
 
-			expression.Alternative = ParseBlockStatement();
+			alternative = ParseBlockStatement();
 		}
+		
+		
+		IfExpression expression = new (currentToken, condition, consequence, alternative);
 
 		return expression;
 	}
@@ -351,12 +377,19 @@ public class Parser
 		return identifiers;
 	}
 
-	public IExpression ParseCallExpression(IExpression function)
+	private IExpression? ParseCallExpression(IExpression function)
 	{
-		return new CallExpression(_currentToken, function, ParseCallArguments());
+		List<IExpression?>? arguments = ParseCallArguments();
+
+		if (arguments is null)
+		{
+			return null;
+		}
+		
+		return new CallExpression(_currentToken, function, arguments);
 	}
 
-	public List<IExpression?>? ParseCallArguments()
+	private List<IExpression?>? ParseCallArguments()
 	{
 		List<IExpression?> arguments = new();
 
@@ -384,34 +417,39 @@ public class Parser
 		return arguments;
 	}
 
-	private IExpression ParsePrefixExpression()
+	private IExpression? ParsePrefixExpression()
 	{
-		PrefixExpression expression = new()
-		{
-			Token = _currentToken,
-			Operator = _currentToken.Literal
-		};
+		Token currentToken = _currentToken;
+		string @operator = _currentToken.Literal;
 		
 		NextToken();
+		
+		IExpression? right = ParseExpression(TokenPrecedence.Prefix);
 
-		expression.Right = ParseExpression(TokenPrecedence.Prefix);
-		return expression;
+		if (right is null)
+		{
+			return null;
+		}
+
+		return new PrefixExpression(currentToken, @operator, right);
 	}
 
-	private IExpression ParseInfixExpression(IExpression left)
+	private IExpression? ParseInfixExpression(IExpression left)
 	{
-		InfixExpression expression = new()
-		{
-			Token = _currentToken,
-			Operator = _currentToken.Literal,
-			Left = left
-		};
+		Token currentToken = _currentToken;
+		string @operator = _currentToken.Literal;
 
 		TokenPrecedence precedence = CurrentPrecedence();
 		NextToken();
-		expression.Right = ParseExpression(precedence);
+		
+		IExpression? right = ParseExpression(precedence);
 
-		return expression;
+		if (right is null)
+		{
+			return null;
+		}
+
+		return new InfixExpression(currentToken, left, @operator, right);
 	}
 	
 	private bool IsCurrentToken(string token)
@@ -463,11 +501,11 @@ public class Parser
 
 	private TokenPrecedence PeekPrecedence()
 	{
-			return TokenPrecedenceCategoryMap.GetValueOrDefault(_peekToken.Type, TokenPrecedence.Lowest);
+			return _tokenPrecedenceCategoryMap.GetValueOrDefault(_peekToken.Type, TokenPrecedence.Lowest);
 	}
 	
 	private TokenPrecedence CurrentPrecedence()
 	{
-			return TokenPrecedenceCategoryMap.GetValueOrDefault(_currentToken.Type, TokenPrecedence.Lowest);
+			return _tokenPrecedenceCategoryMap.GetValueOrDefault(_currentToken.Type, TokenPrecedence.Lowest);
 	}
 }

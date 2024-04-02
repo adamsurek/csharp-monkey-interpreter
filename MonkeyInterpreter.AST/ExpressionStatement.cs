@@ -4,17 +4,18 @@ namespace MonkeyInterpreter.AST;
 
 public class ExpressionStatement : IStatement
 {
-	public Token Token;
-	public IExpression Expression;
+	private readonly Token _token;
+	
+	public IExpression? Expression;
 
 	public ExpressionStatement(Token token)
 	{
-		Token = token;
+		_token = token;
 	}
 
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()
