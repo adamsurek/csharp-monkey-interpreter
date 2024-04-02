@@ -420,11 +420,8 @@ public class Parser
 
 	private IExpression? ParsePrefixExpression()
 	{
-		PrefixExpression expression = new()
-		{
-			Token = _currentToken,
-			Operator = _currentToken.Literal
-		};
+		Token currentToken = _currentToken;
+		string @operator = _currentToken.Literal;
 		
 		NextToken();
 		
@@ -435,9 +432,7 @@ public class Parser
 			return null;
 		}
 
-		expression.Right = right;
-		
-		return expression;
+		return new PrefixExpression(currentToken, @operator, right);
 	}
 
 	private IExpression? ParseInfixExpression(IExpression left)

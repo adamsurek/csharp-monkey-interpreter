@@ -9,6 +9,13 @@ public class PrefixExpression : IExpression
 	public string Operator;
 	public IExpression Right;
 
+	public PrefixExpression(Token token, string @operator, IExpression right)
+	{
+		Token = token;
+		Operator = @operator;
+		Right = right;
+	}
+
 	public string TokenLiteral()
 	{
 		return Token.Literal;
