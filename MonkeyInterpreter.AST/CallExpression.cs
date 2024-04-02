@@ -7,9 +7,9 @@ public class CallExpression : IExpression
 {
 	public Token Token;
 	public IExpression Function;
-	public List<IExpression>? Arguments;
+	public List<IExpression?> Arguments;
 
-	public CallExpression(Token token, IExpression function, List<IExpression> arguments)
+	public CallExpression(Token token, IExpression function, List<IExpression?> arguments)
 	{
 		Token = token;
 		Function = function;

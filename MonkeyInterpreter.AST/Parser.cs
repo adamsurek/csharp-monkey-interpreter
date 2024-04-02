@@ -2,7 +2,6 @@
 
 namespace MonkeyInterpreter.AST;
 
-// TODO: Handle nulls
 // TODO: Add method XML comments
 
 public enum TokenPrecedence
@@ -20,16 +19,16 @@ public class Parser
 {
 	private Token _currentToken;
 	private Token _peekToken;
-	private Lexer _lexer;
-	private List<string> _errors;
+	private readonly Lexer _lexer;
+	private readonly List<string> _errors;
 
-	private delegate IExpression ParsePrefixFunc();
-	private delegate IExpression ParseInfixFunc(IExpression expression);
+	private delegate IExpression? ParsePrefixFunc();
+	private delegate IExpression? ParseInfixFunc(IExpression expression);
 
-	private Dictionary<string, ParsePrefixFunc> _prefixParsers;
-	private Dictionary<string, ParseInfixFunc> _infixParsers;
+	private readonly Dictionary<string, ParsePrefixFunc> _prefixParsers;
+	private readonly Dictionary<string, ParseInfixFunc> _infixParsers;
 
-	public Dictionary<string, TokenPrecedence> TokenPrecedenceCategoryMap = new()
+	private readonly Dictionary<string, TokenPrecedence> _tokenPrecedenceCategoryMap = new()
 	{
 		{ Token.Equal, TokenPrecedence.Equals },
 		{ Token.NEqual, TokenPrecedence.Equals },
@@ -120,7 +119,12 @@ public class Parser
 			return null;
 		}
 
-		IExpression leftExpression = prefixFunc.Invoke();
+		IExpression? leftExpression = prefixFunc.Invoke();
+
+		if (leftExpression is null)
+		{
+			return null;
+		}
 
 		while (!IsPeekToken(Token.Semicolon) && precedence < PeekPrecedence())
 		{
@@ -132,7 +136,7 @@ public class Parser
 			}
 			
 			NextToken();
-			leftExpression = infixFunc.Invoke(leftExpression);
+			leftExpression = infixFunc.Invoke(leftExpression!);
 		}
 
 		return leftExpression;
@@ -159,8 +163,15 @@ public class Parser
 		}
 
 		NextToken();
+		
+		IExpression? value = ParseExpression(TokenPrecedence.Lowest);
 
-		letStatement.Value = ParseExpression(TokenPrecedence.Lowest);
+		if (value is null)
+		{
+			return null;
+		}
+
+		letStatement.Value = value;
 
 		if (IsPeekToken(Token.Semicolon))
 		{
@@ -170,12 +181,19 @@ public class Parser
 		return letStatement;
 	}
 
-	private ReturnStatement ParseReturnStatement()
+	private ReturnStatement? ParseReturnStatement()
 	{
 		ReturnStatement returnStatement = new(_currentToken);
 		NextToken();
+		
+		IExpression? value = ParseExpression(TokenPrecedence.Lowest);
 
-		returnStatement.ReturnValue = ParseExpression(TokenPrecedence.Lowest);
+		if (value is null)
+		{
+			return null;
+		}
+
+		returnStatement.ReturnValue = value;
 
 		if (IsPeekToken(Token.Semicolon))
 		{
@@ -188,7 +206,15 @@ public class Parser
 	private ExpressionStatement? ParseExpressionStatement()
 	{
 		ExpressionStatement expressionStatement = new(_currentToken);
-		expressionStatement.Expression = ParseExpression(TokenPrecedence.Lowest);
+		
+		IExpression? expression = ParseExpression(TokenPrecedence.Lowest);
+
+		if (expression is null)
+		{
+			return null;
+		}
+		
+		expressionStatement.Expression = expression;
 
 		if (IsPeekToken(Token.Semicolon))
 		{
@@ -351,12 +377,19 @@ public class Parser
 		return identifiers;
 	}
 
-	public IExpression ParseCallExpression(IExpression function)
+	private IExpression? ParseCallExpression(IExpression function)
 	{
-		return new CallExpression(_currentToken, function, ParseCallArguments());
+		List<IExpression?>? arguments = ParseCallArguments();
+
+		if (arguments is null)
+		{
+			return null;
+		}
+		
+		return new CallExpression(_currentToken, function, arguments);
 	}
 
-	public List<IExpression?>? ParseCallArguments()
+	private List<IExpression?>? ParseCallArguments()
 	{
 		List<IExpression?> arguments = new();
 
@@ -384,7 +417,7 @@ public class Parser
 		return arguments;
 	}
 
-	private IExpression ParsePrefixExpression()
+	private IExpression? ParsePrefixExpression()
 	{
 		PrefixExpression expression = new()
 		{
@@ -393,12 +426,20 @@ public class Parser
 		};
 		
 		NextToken();
+		
+		IExpression? right = ParseExpression(TokenPrecedence.Prefix);
 
-		expression.Right = ParseExpression(TokenPrecedence.Prefix);
+		if (right is null)
+		{
+			return null;
+		}
+
+		expression.Right = right;
+		
 		return expression;
 	}
 
-	private IExpression ParseInfixExpression(IExpression left)
+	private IExpression? ParseInfixExpression(IExpression left)
 	{
 		InfixExpression expression = new()
 		{
@@ -409,7 +450,15 @@ public class Parser
 
 		TokenPrecedence precedence = CurrentPrecedence();
 		NextToken();
-		expression.Right = ParseExpression(precedence);
+		
+		IExpression? right = ParseExpression(precedence);
+
+		if (right is null)
+		{
+			return null;
+		}
+
+		expression.Right = right;
 
 		return expression;
 	}
@@ -463,11 +512,11 @@ public class Parser
 
 	private TokenPrecedence PeekPrecedence()
 	{
-			return TokenPrecedenceCategoryMap.GetValueOrDefault(_peekToken.Type, TokenPrecedence.Lowest);
+			return _tokenPrecedenceCategoryMap.GetValueOrDefault(_peekToken.Type, TokenPrecedence.Lowest);
 	}
 	
 	private TokenPrecedence CurrentPrecedence()
 	{
-			return TokenPrecedenceCategoryMap.GetValueOrDefault(_currentToken.Type, TokenPrecedence.Lowest);
+			return _tokenPrecedenceCategoryMap.GetValueOrDefault(_currentToken.Type, TokenPrecedence.Lowest);
 	}
 }
