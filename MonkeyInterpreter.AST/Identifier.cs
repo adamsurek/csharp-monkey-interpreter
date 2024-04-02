@@ -2,20 +2,20 @@
 
 namespace MonkeyInterpreter.AST;
 
-public struct Identifier : IExpression
+public class Identifier : IExpression
 {
-	public Token Token;
-	public string Value;
+	private readonly Token _token;
+	public readonly string Value;
 	
 	public Identifier(Token token, string value)
 	{
-		Token = token;
+		_token = token;
 		Value = value;
 	}
 	
 	public string TokenLiteral()
 	{
-		return Token.Literal;
+		return _token.Literal;
 	}
 
 	public string String()
