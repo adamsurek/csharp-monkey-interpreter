@@ -144,18 +144,14 @@ public class Parser
 
 	private LetStatement? ParseLetStatement()
 	{
-		LetStatement letStatement = new(_currentToken);
+		Token currentToken = _currentToken;
 
 		if (!ExpectPeek(Token.Ident))
 		{
 			return null;
 		}
 
-		letStatement.Name = new Identifier()
-		{
-			Token = _currentToken,
-			Value = _currentToken.Literal
-		};
+		Identifier name = new(_currentToken, _currentToken.Literal);
 
 		if (!ExpectPeek(Token.Assign))
 		{
@@ -171,14 +167,12 @@ public class Parser
 			return null;
 		}
 
-		letStatement.Value = value;
-
 		if (IsPeekToken(Token.Semicolon))
 		{
 			NextToken();
 		}
 
-		return letStatement;
+		return new LetStatement(currentToken, name, value);
 	}
 
 	private ReturnStatement? ParseReturnStatement()
