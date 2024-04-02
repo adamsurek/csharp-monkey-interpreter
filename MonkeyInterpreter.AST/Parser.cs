@@ -451,12 +451,8 @@ public class Parser
 
 	private IExpression? ParseInfixExpression(IExpression left)
 	{
-		InfixExpression expression = new()
-		{
-			Token = _currentToken,
-			Operator = _currentToken.Literal,
-			Left = left
-		};
+		Token currentToken = _currentToken;
+		string @operator = _currentToken.Literal;
 
 		TokenPrecedence precedence = CurrentPrecedence();
 		NextToken();
@@ -468,9 +464,7 @@ public class Parser
 			return null;
 		}
 
-		expression.Right = right;
-
-		return expression;
+		return new InfixExpression(currentToken, left, @operator, right);
 	}
 	
 	private bool IsCurrentToken(string token)
