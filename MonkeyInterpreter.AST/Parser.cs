@@ -231,10 +231,7 @@ public class Parser
 
 	private IExpression? ParseIntegerLiteral()
 	{
-		IntegerLiteral integerLiteral = new()
-		{
-			Token = _currentToken
-		};
+		IntegerLiteral integerLiteral = new(_currentToken);
 
 		if (!int.TryParse(_currentToken.Literal, out integerLiteral.Value))
 		{
