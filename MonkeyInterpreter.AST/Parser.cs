@@ -265,16 +265,22 @@ public class Parser
 
 	private IExpression? ParseIfExpression()
 	{
-		IfExpression expression = new (_currentToken);
-
+		Token currentToken = _currentToken;
+		
 		if (!ExpectPeek(Token.LParen))
 		{
 			return null;
 		}
 		
 		NextToken();
-		expression.Condition = ParseExpression(TokenPrecedence.Lowest);
+		
+		IExpression? condition = ParseExpression(TokenPrecedence.Lowest);
 
+		if (condition is null)
+		{
+			return null;
+		}
+		
 		if (!ExpectPeek(Token.RParen))
 		{
 			return null;
@@ -284,8 +290,9 @@ public class Parser
 		{
 			return null;
 		}
-
-		expression.Consequence = ParseBlockStatement();
+		
+		BlockStatement consequence = ParseBlockStatement();
+		BlockStatement? alternative = null;
 
 		if (IsPeekToken(Token.Else))
 		{
@@ -296,8 +303,11 @@ public class Parser
 				return null;
 			}
 
-			expression.Alternative = ParseBlockStatement();
+			alternative = ParseBlockStatement();
 		}
+		
+		
+		IfExpression expression = new (currentToken, condition, consequence, alternative);
 
 		return expression;
 	}
