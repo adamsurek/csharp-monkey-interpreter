@@ -1,15 +1,12 @@
-﻿using System.Linq.Expressions;
-using MonkeyInterpreter.AST;
-using MonkeyInterpreter.Core;
-using Boolean = MonkeyInterpreter.Core.Boolean;
+﻿using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.AST;
 
 public static class Evaluator
 {
-	private static readonly Boolean TrueBooleanObject = new(true);
-	private static readonly Boolean FalseBooleanObject = new(false);
-	private static readonly Null NullObject = new();
+	private static readonly BooleanObject TrueBooleanObject = new(true);
+	private static readonly BooleanObject FalseBooleanObject = new(false);
+	private static readonly NullObject NullObject = new();
 	
 	public static IObject? Evaluate(INode node)
 	{
@@ -26,7 +23,7 @@ public static class Evaluator
 				return EvaluatePrefixExpression(prefixExpression.Operator, right);
 			
 			case IntegerLiteral integerLiteral:
-				return new Integer(integerLiteral.Value);
+				return new IntegerObject(integerLiteral.Value);
 			
 			case BooleanLiteral booleanLiteral:
 				return booleanLiteral.Value switch
@@ -57,22 +54,34 @@ public static class Evaluator
 		{
 			case "!":
 				return EvaluateBangOperatorExpression(right);
+			case "-":
+				return EvaluateMinusOperatorExpression(right);
 			default:
 				return NullObject;
 		}
 	}
 
-	private static IObject? EvaluateBangOperatorExpression(IObject right)
+	private static IObject EvaluateBangOperatorExpression(IObject right)
 	{
 		return right switch
 		{
-			Boolean boolean => boolean.Value switch
+			BooleanObject boolean => boolean.Value switch
 			{
 				true => FalseBooleanObject,
 				false => TrueBooleanObject
 			},
-			Null _ => TrueBooleanObject,
+			NullObject _ => TrueBooleanObject,
 			_ => FalseBooleanObject
 		};
+	}
+
+	private static IObject EvaluateMinusOperatorExpression(IObject right)
+	{
+		if (right.Type() != ObjectTypeEnum.Integer)
+		{
+			return NullObject;
+		}
+		
+		return new IntegerObject(-((IntegerObject)right).Value);
 	}
 }
