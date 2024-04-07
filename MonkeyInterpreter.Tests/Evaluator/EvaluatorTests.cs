@@ -46,6 +46,15 @@ public class IntegerEvaluationTests
 	[InlineData("10", 10)]
 	[InlineData("-5", -5)]
 	[InlineData("-10", -10)]
+	[InlineData("5 - 5 - 5 - 5 - 10", -20)]
+	[InlineData("5 + 5 + 5 + 5 - 10", 10)]
+	[InlineData("2 * 2 * 2", 8)]
+	[InlineData("5 + 5 * 10", 55)]
+	[InlineData("-50 + 100 - 50", 0)]
+	[InlineData("5 / 5 * 10", 10)]
+	[InlineData("-2 * 3 / 6", -1)]
+	[InlineData("(1 + 3) / 2", 2)]
+	[InlineData("((10 + 10) - 20) / 2", 0)]
 	public void IntegerObject_HasExpectedValue(string expression, int expectedValue)
 	{
 		Program program = new(expression);

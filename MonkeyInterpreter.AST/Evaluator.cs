@@ -1,4 +1,5 @@
-﻿using MonkeyInterpreter.Core;
+﻿using System.Net;
+using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.AST;
 
@@ -19,8 +20,14 @@ public static class Evaluator
 				return Evaluate(expressionStatement.Expression);
 			
 			case PrefixExpression prefixExpression:
-				IObject? right = Evaluate(prefixExpression.Right);
-				return EvaluatePrefixExpression(prefixExpression.Operator, right);
+				IObject? prefixRight = Evaluate(prefixExpression.Right);
+				return EvaluatePrefixExpression(prefixExpression.Operator, prefixRight);
+			
+			case InfixExpression infixExpression:
+				IObject? infixLeft = Evaluate(infixExpression.Left);
+				IObject? infixRight = Evaluate(infixExpression.Right);
+				return EvaluateInfixExpression(infixExpression.Operator, infixLeft, infixRight);
+				
 			
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
@@ -83,5 +90,37 @@ public static class Evaluator
 		}
 		
 		return new IntegerObject(-((IntegerObject)right).Value);
+	}
+
+	private static IObject EvaluateInfixExpression(string @operator, IObject left, IObject right)
+	{
+		switch (true)
+		{ 
+			case true when left.Type() == ObjectTypeEnum.Integer && right.Type() == ObjectTypeEnum.Integer:
+				return EvaluateIntegerInfixExpression(@operator, left, right);
+			
+			default:
+				return NullObject;
+		}
+	}
+
+	private static IObject EvaluateIntegerInfixExpression(string @operator, IObject left, IObject right)
+	{
+		int leftValue = ((IntegerObject)left).Value;
+		int rightValue = ((IntegerObject)right).Value;
+
+		switch (@operator)
+		{
+			case "+":
+				return new IntegerObject(leftValue + rightValue);
+			case "-":
+				return new IntegerObject(leftValue - rightValue);
+			case "*":
+				return new IntegerObject(leftValue * rightValue);
+			case "/":
+				return new IntegerObject(leftValue / rightValue);
+			default:
+				return NullObject;
+		}
 	}
 }
