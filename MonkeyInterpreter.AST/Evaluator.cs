@@ -8,7 +8,7 @@ public static class Evaluator
 	private static readonly BooleanObject FalseBooleanObject = new(false);
 	private static readonly NullObject NullObject = new();
 	
-	public static IObject? Evaluate(INode node)
+	public static IObject Evaluate(INode node)
 	{
 		switch (node)
 		{
@@ -36,14 +36,16 @@ public static class Evaluator
 					true => TrueBooleanObject,
 					false => FalseBooleanObject
 				};
+			
+			default:
+				return NullObject;
 		}
 
-		return null;
 	}
 
-	private static IObject? EvaluateStatements(List<IStatement> statements)
+	private static IObject EvaluateStatements(List<IStatement> statements)
 	{
-		IObject? result = null;
+		IObject? result = NullObject;
 		
 		foreach (IStatement statement in statements)
 		{
@@ -53,7 +55,7 @@ public static class Evaluator
 		return result;
 	}
 
-	private static IObject? EvaluatePrefixExpression(string @operator, IObject right)
+	private static IObject EvaluatePrefixExpression(string @operator, IObject right)
 	{
 		switch (@operator)
 		{
