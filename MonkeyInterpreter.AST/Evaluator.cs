@@ -27,7 +27,6 @@ public static class Evaluator
 				IObject? infixLeft = Evaluate(infixExpression.Left);
 				IObject? infixRight = Evaluate(infixExpression.Right);
 				return EvaluateInfixExpression(infixExpression.Operator, infixLeft, infixRight);
-				
 			
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
@@ -119,6 +118,14 @@ public static class Evaluator
 				return new IntegerObject(leftValue * rightValue);
 			case "/":
 				return new IntegerObject(leftValue / rightValue);
+			case "<":
+				return leftValue < rightValue ? TrueBooleanObject : FalseBooleanObject;
+			case ">":
+				return leftValue > rightValue ? TrueBooleanObject : FalseBooleanObject;
+			case "==":
+				return leftValue == rightValue ? TrueBooleanObject : FalseBooleanObject;
+			case "!=":
+				return leftValue != rightValue ? TrueBooleanObject : FalseBooleanObject;
 			default:
 				return NullObject;
 		}

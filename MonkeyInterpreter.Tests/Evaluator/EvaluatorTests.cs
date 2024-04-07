@@ -75,6 +75,11 @@ public class BooleanEvaluationTests
 	[InlineData("!!false", false)]
 	[InlineData("!5", false)]
 	[InlineData("!!5", true)]
+	[InlineData("1 < 2", true)]
+	[InlineData("1 > 2", false)]
+	[InlineData("1 < 1", false)]
+	[InlineData("1 == 1", true)]
+	[InlineData("1 != 1", false)]
 	public void BooleanObject_HasExpectedValue(string expression, bool expectedValue)
 	{
 		Program program = new(expression);
