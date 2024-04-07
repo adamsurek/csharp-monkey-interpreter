@@ -1,5 +1,4 @@
-﻿using System.Net;
-using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.Core;
 
 namespace MonkeyInterpreter.AST;
 
