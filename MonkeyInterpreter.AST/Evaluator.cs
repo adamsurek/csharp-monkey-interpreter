@@ -98,6 +98,12 @@ public static class Evaluator
 			case true when left.Type() == ObjectTypeEnum.Integer && right.Type() == ObjectTypeEnum.Integer:
 				return EvaluateIntegerInfixExpression(@operator, left, right);
 			
+			case true when @operator == "==":
+				return left == right ? TrueBooleanObject : FalseBooleanObject;
+			
+			case true when @operator == "!=":
+				return left != right ? TrueBooleanObject : FalseBooleanObject;
+			
 			default:
 				return NullObject;
 		}
