@@ -31,8 +31,14 @@ public static class Repl
 				continue;
 			}
 
-			writer.WriteLine(ast.String());
-			writer.WriteLine();
+			IObject? evaluatedObject = Evaluator.Evaluate(ast);
+
+			if (evaluatedObject is not null)
+			{
+				writer.WriteLine(evaluatedObject.Inspect());
+				// writer.WriteLine();
+			}
+
 		}
 	}
 
