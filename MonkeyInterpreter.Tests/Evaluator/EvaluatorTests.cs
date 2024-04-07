@@ -2,6 +2,7 @@
 using MonkeyInterpreter.AST;
 using MonkeyInterpreter.Core;
 using Xunit.Abstractions;
+using Boolean = MonkeyInterpreter.Core.Boolean;
 
 namespace MonkeyInterpreter.Tests.Evaluator;
 
@@ -24,6 +25,8 @@ public class GenericTests
 	[Theory]
 	[InlineData("5", typeof(Integer))]
 	[InlineData("10", typeof(Integer))]
+	[InlineData("true", typeof(Boolean))]
+	[InlineData("false", typeof(Boolean))]
 	public void EvalResult_IsExpectedObjectType(string expression, Type expectedType)
 	{
 		Program program = new(expression);
@@ -38,11 +41,26 @@ public class IntegerEvaluationTests
 	[Theory]
 	[InlineData("5", 5)]
 	[InlineData("10", 10)]
-	public void EvalResult_HasExpectedValue(string expression, int expectedValue)
+	public void IntegerObject_HasExpectedValue(string expression, int expectedValue)
 	{
 		Program program = new(expression);
 		Integer evaluatedObject = (Integer)AST.Evaluator.Evaluate(program.Ast)!;
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
 	}
+}
+
+public class BooleanEvaluationTests
+{
+	[Theory]
+	[InlineData("true", true)]
+	[InlineData("false", false)]
+	public void BooleanObject_HasExpectedValue(string expression, bool expectedValue)
+	{
+		Program program = new(expression);
+		Boolean evaluatedObject = (Boolean)AST.Evaluator.Evaluate(program.Ast)!;
+
+		Assert.Equal(expectedValue, evaluatedObject.Value);
+	}
+	
 }
