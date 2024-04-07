@@ -55,6 +55,12 @@ public class BooleanEvaluationTests
 	[Theory]
 	[InlineData("true", true)]
 	[InlineData("false", false)]
+	[InlineData("!true", false)]
+	[InlineData("!false", true)]
+	[InlineData("!!true", true)]
+	[InlineData("!!false", false)]
+	[InlineData("!5", false)]
+	[InlineData("!!5", true)]
 	public void BooleanObject_HasExpectedValue(string expression, bool expectedValue)
 	{
 		Program program = new(expression);
@@ -62,5 +68,21 @@ public class BooleanEvaluationTests
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
 	}
+	
+	// [Theory]
+	// [InlineData("!true", false)]
+	// [InlineData("!false", true)]
+	// [InlineData("!!true", true)]
+	// [InlineData("!!false", false)]
+	// [InlineData("!5", false)]
+	// [InlineData("!!5", true)]
+	// public void BooleanObject_BangOperator_ReturnsExpectedValue(string expression, bool expectedValue)
+	// {
+	// 	Program program = new(expression);
+	// 	Boolean evaluatedObject = (Boolean)AST.Evaluator.Evaluate(program.Ast)!;
+	//
+	// 	Assert.Equal(expectedValue, evaluatedObject.Value);
+	// }
+	
 	
 }

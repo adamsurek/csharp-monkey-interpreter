@@ -21,6 +21,10 @@ public static class Evaluator
 			case ExpressionStatement expressionStatement:
 				return Evaluate(expressionStatement.Expression);
 			
+			case PrefixExpression prefixExpression:
+				IObject? right = Evaluate(prefixExpression.Right);
+				return EvaluatePrefixExpression(prefixExpression.Operator, right);
+			
 			case IntegerLiteral integerLiteral:
 				return new Integer(integerLiteral.Value);
 			
@@ -45,5 +49,30 @@ public static class Evaluator
 		}
 
 		return result;
+	}
+
+	private static IObject? EvaluatePrefixExpression(string @operator, IObject right)
+	{
+		switch (@operator)
+		{
+			case "!":
+				return EvaluateBangOperatorExpression(right);
+			default:
+				return NullObject;
+		}
+	}
+
+	private static IObject? EvaluateBangOperatorExpression(IObject right)
+	{
+		return right switch
+		{
+			Boolean boolean => boolean.Value switch
+			{
+				true => FalseBooleanObject,
+				false => TrueBooleanObject
+			},
+			Null _ => TrueBooleanObject,
+			_ => FalseBooleanObject
+		};
 	}
 }
