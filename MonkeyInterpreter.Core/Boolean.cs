@@ -3,16 +3,16 @@
 public class Boolean : IObject
 {
 	private const string ObjectType = "BOOLEAN";
-	private readonly bool _value;
+	public readonly bool Value;
 
 	public Boolean(bool value)
 	{
-		_value = value;
+		Value = value;
 	}
 
 	public string Inspect()
 	{
-		return _value.ToString();
+		return Value.ToString();
 	}
 
 	public string Type()
