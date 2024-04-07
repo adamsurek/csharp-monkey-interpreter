@@ -2,6 +2,6 @@
 
 public interface IObject
 {
-	string Type();
+	ObjectTypeEnum Type();
 	string Inspect();
 }

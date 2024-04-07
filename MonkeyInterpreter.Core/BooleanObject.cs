@@ -1,11 +1,11 @@
 ﻿namespace MonkeyInterpreter.Core;
 
-public class Boolean : IObject
+public class BooleanObject : IObject
 {
-	private const string ObjectType = "BOOLEAN";
+	private const ObjectTypeEnum ObjectType = ObjectTypeEnum.Boolean;
 	public readonly bool Value;
 
-	public Boolean(bool value)
+	public BooleanObject(bool value)
 	{
 		Value = value;
 	}
@@ -15,7 +15,7 @@ public class Boolean : IObject
 		return Value.ToString();
 	}
 
-	public string Type()
+	public ObjectTypeEnum Type()
 	{
 		return ObjectType;
 	}
