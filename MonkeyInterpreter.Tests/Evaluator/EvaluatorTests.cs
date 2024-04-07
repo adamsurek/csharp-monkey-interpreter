@@ -27,7 +27,7 @@ public class GenericTests
 	public void EvalResult_IsExpectedObjectType(string expression, Type expectedType)
 	{
 		Program program = new(expression);
-		IObject evaluatedObject = Evaluate(program);
+		IObject evaluatedObject = AST.Evaluator.Evaluate(program.Ast)!;
 
 		Assert.IsType(expectedType, evaluatedObject);
 	}
@@ -41,7 +41,7 @@ public class IntegerEvaluationTests
 	public void EvalResult_HasExpectedValue(string expression, int expectedValue)
 	{
 		Program program = new(expression);
-		Integer evaluatedObject = (Integer)Evaluate(program);
+		Integer evaluatedObject = (Integer)AST.Evaluator.Evaluate(program.Ast)!;
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
 	}
