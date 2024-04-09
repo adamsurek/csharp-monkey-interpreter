@@ -16,15 +16,20 @@ public static class Evaluator
 				return EvaluateStatements(ast.Statements);
 			
 			case ExpressionStatement expressionStatement:
+				if (expressionStatement.Expression is null)
+				{
+					return NullObject;
+				}
+				
 				return Evaluate(expressionStatement.Expression);
 			
 			case PrefixExpression prefixExpression:
-				IObject? prefixRight = Evaluate(prefixExpression.Right);
+				IObject prefixRight = Evaluate(prefixExpression.Right);
 				return EvaluatePrefixExpression(prefixExpression.Operator, prefixRight);
 			
 			case InfixExpression infixExpression:
-				IObject? infixLeft = Evaluate(infixExpression.Left);
-				IObject? infixRight = Evaluate(infixExpression.Right);
+				IObject infixLeft = Evaluate(infixExpression.Left);
+				IObject infixRight = Evaluate(infixExpression.Right);
 				return EvaluateInfixExpression(infixExpression.Operator, infixLeft, infixRight);
 			
 			case IntegerLiteral integerLiteral:
@@ -45,7 +50,7 @@ public static class Evaluator
 
 	private static IObject EvaluateStatements(List<IStatement> statements)
 	{
-		IObject? result = NullObject;
+		IObject result = NullObject;
 		
 		foreach (IStatement statement in statements)
 		{
