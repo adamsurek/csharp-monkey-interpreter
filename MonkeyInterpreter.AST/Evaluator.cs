@@ -13,7 +13,7 @@ public static class Evaluator
 		switch (node)
 		{
 			case AbstractSyntaxTree ast:
-				return EvaluateStatements(ast.Statements);
+				return EvaluateAst(ast);
 			
 			case ExpressionStatement expressionStatement:
 				if (expressionStatement.Expression is null)
@@ -32,10 +32,14 @@ public static class Evaluator
 				return EvaluateInfixExpression(infixExpression.Operator, infixLeft, infixRight);
 			
 			case BlockStatement blockStatement:
-				return EvaluateStatements(blockStatement.Statements);
+				return EvaluateBlockStatement(blockStatement);
 			
 			case IfExpression ifExpression:
 				return EvaluateIfExpression(ifExpression);
+			
+			case ReturnStatement returnStatement:
+				IObject value = Evaluate(returnStatement.ReturnValue);
+				return new ReturnValueObject(value);
 			
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
@@ -53,13 +57,18 @@ public static class Evaluator
 
 	}
 
-	private static IObject EvaluateStatements(List<IStatement> statements)
+	private static IObject EvaluateAst(AbstractSyntaxTree ast)
 	{
 		IObject result = NullObject;
 		
-		foreach (IStatement statement in statements)
+		foreach (IStatement statement in ast.Statements)
 		{
 			result = Evaluate(statement);
+
+			if (result is ReturnValueObject returnValueObject)
+			{
+				return returnValueObject.Value;
+			}
 		}
 
 		return result;
@@ -118,6 +127,23 @@ public static class Evaluator
 			default:
 				return NullObject;
 		}
+	}
+
+	private static IObject EvaluateBlockStatement(BlockStatement blockStatement)
+	{
+		IObject result = NullObject;
+		
+		foreach (IStatement statement in blockStatement.Statements)
+		{
+			result = Evaluate(statement);
+
+			if (result != NullObject && result.Type() == ObjectTypeEnum.ReturnValue)
+			{
+				return result;
+			}
+		}
+
+		return result;
 	}
 
 	private static IObject EvaluateIntegerInfixExpression(string @operator, IObject left, IObject right)
