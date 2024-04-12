@@ -6,8 +6,8 @@ public static class Evaluator
 {
 	private static readonly BooleanObject TrueBooleanObject = new(true);
 	private static readonly BooleanObject FalseBooleanObject = new(false);
-	private static readonly NullObject NullObject = new();
-	
+	public static readonly NullObject NullObject = new();
+
 	public static IObject Evaluate(INode node)
 	{
 		switch (node)
@@ -20,7 +20,6 @@ public static class Evaluator
 				{
 					return NullObject;
 				}
-				
 				return Evaluate(expressionStatement.Expression);
 			
 			case PrefixExpression prefixExpression:
@@ -31,6 +30,12 @@ public static class Evaluator
 				IObject infixLeft = Evaluate(infixExpression.Left);
 				IObject infixRight = Evaluate(infixExpression.Right);
 				return EvaluateInfixExpression(infixExpression.Operator, infixLeft, infixRight);
+			
+			case BlockStatement blockStatement:
+				return EvaluateStatements(blockStatement.Statements);
+			
+			case IfExpression ifExpression:
+				return EvaluateIfExpression(ifExpression);
 			
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
@@ -141,5 +146,34 @@ public static class Evaluator
 			default:
 				return NullObject;
 		}
+	}
+
+	private static IObject EvaluateIfExpression(IfExpression ifExpression)
+	{
+		IObject condition = Evaluate(ifExpression.Condition);
+
+		if (IsTruthy(condition))
+		{
+			return Evaluate(ifExpression.Consequence);
+		}
+		else if (ifExpression.Alternative is not null)
+		{
+			return Evaluate(ifExpression.Alternative);
+		}
+		else
+		{
+			return NullObject;
+		}
+	}
+
+	private static bool IsTruthy(IObject @object)
+	{
+		return true switch
+		{
+			true when @object == NullObject => false,
+			true when @object == TrueBooleanObject => true,
+			true when @object == FalseBooleanObject => false,
+			_ => true
+		};
 	}
 }

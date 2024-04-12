@@ -22,6 +22,7 @@ public class GenericTests
 	[Theory]
 	[InlineData("5", typeof(IntegerObject))]
 	[InlineData("10", typeof(IntegerObject))]
+	[InlineData("((10 + 10) - 20) / 2", typeof(IntegerObject))]
 	[InlineData("true", typeof(BooleanObject))]
 	[InlineData("false", typeof(BooleanObject))]
 	[InlineData("!true", typeof(BooleanObject))]
@@ -95,5 +96,27 @@ public class BooleanEvaluationTests
 		BooleanObject evaluatedObject = (BooleanObject)AST.Evaluator.Evaluate(program.Ast)!;
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
+	}
+}
+
+public class ConditionalExpressionTests
+{
+	[Theory]
+	[InlineData("if (true) { 10 }", 10)]
+	[InlineData("if (false) { 10 }", null)]
+	[InlineData("if (1) { 10 }", 10)]
+	[InlineData("if (1 < 2) { 10 }", 10)]
+	[InlineData("if (1 > 2) { 10 }", null)]
+	[InlineData("if (1 > 2) { 10 } else { 5 }", 5)]
+	public void ConditionalExpression_EvaluatesCorrectExpression(string expression, object? expectedValue)
+	{
+		Program program = new(expression);
+		object? actualValue = AST.Evaluator.Evaluate(program.Ast) switch
+		{
+			IntegerObject integerObject => integerObject.Value,
+			_ => null
+		};
+		
+		Assert.Equal(expectedValue, actualValue);
 	}
 }
