@@ -22,6 +22,7 @@ public class GenericTests
 	[Theory]
 	[InlineData("5", typeof(IntegerObject))]
 	[InlineData("10", typeof(IntegerObject))]
+	[InlineData("((10 + 10) - 20) / 2", typeof(IntegerObject))]
 	[InlineData("true", typeof(BooleanObject))]
 	[InlineData("false", typeof(BooleanObject))]
 	[InlineData("!true", typeof(BooleanObject))]
@@ -30,6 +31,9 @@ public class GenericTests
 	[InlineData("!!false", typeof(BooleanObject))]
 	[InlineData("!5", typeof(BooleanObject))]
 	[InlineData("!!5", typeof(BooleanObject))]
+	[InlineData("return 10;", typeof(IntegerObject))]
+	[InlineData("return 10; 9;", typeof(IntegerObject))]
+	[InlineData("", typeof(NullObject))]
 	public void EvalResult_IsExpectedObjectType(string expression, Type expectedType)
 	{
 		Program program = new(expression);
@@ -95,5 +99,48 @@ public class BooleanEvaluationTests
 		BooleanObject evaluatedObject = (BooleanObject)AST.Evaluator.Evaluate(program.Ast)!;
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
+	}
+}
+
+public class ConditionalExpressionTests
+{
+	[Theory]
+	[InlineData("if (true) { 10 }", 10)]
+	[InlineData("if (false) { 10 }", null)]
+	[InlineData("if (1) { 10 }", 10)]
+	[InlineData("if (1 < 2) { 10 }", 10)]
+	[InlineData("if (1 > 2) { 10 }", null)]
+	[InlineData("if (1 > 2) { 10 } else { 5 }", 5)]
+	public void ConditionalExpression_EvaluatesCorrectExpression(string expression, object? expectedValue)
+	{
+		Program program = new(expression);
+		object? actualValue = AST.Evaluator.Evaluate(program.Ast) switch
+		{
+			IntegerObject integerObject => integerObject.Value,
+			_ => null
+		};
+		
+		Assert.Equal(expectedValue, actualValue);
+	}
+}
+
+public class ReturnStatementTests
+{
+	[Theory]
+	[InlineData("return 10;", 10)]
+	[InlineData("return 10; 9;", 10)]
+	[InlineData("return 6 * 2; 9;", 12)]
+	[InlineData("15; return 6 * 2; 9;", 12)]
+	// [InlineData("if (10 > 1) { if (10 > 1) {return 6 * 2;} return 1; }", 12)]
+	public void ReturnStatements_HasExpectedValue(string expression, object expectedValue)
+	{
+		Program program = new(expression);
+		object? actualValue = AST.Evaluator.Evaluate(program.Ast) switch
+		{
+			IntegerObject integerObject => integerObject.Value,
+			_ => null
+		};
+		
+		Assert.Equal(expectedValue, actualValue);
 	}
 }
