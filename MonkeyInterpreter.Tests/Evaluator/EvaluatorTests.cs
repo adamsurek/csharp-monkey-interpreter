@@ -144,3 +144,22 @@ public class ReturnStatementTests
 		Assert.Equal(expectedValue, actualValue);
 	}
 }
+
+public class ErrorHandlingTests
+{
+	[Theory]
+	[InlineData("5 + true","Type mismatch: Integer + Boolean")]
+	[InlineData("5 + true; 5;","Type mismatch: Integer + Boolean")]
+	[InlineData("-true","Unknown operator: -Boolean")]
+	[InlineData("true + false","Unknown operator: Boolean + Boolean")]
+	[InlineData("5; true + false; 5;","Unknown operator: Boolean + Boolean")]
+	[InlineData("if (10 > 1) { true + false; }","Unknown operator: Boolean + Boolean")]
+	[InlineData("if (10 > 1) { if (10 > 1) { return true + false; } return 1; }","Unknown operator: Boolean + Boolean")]
+	public void ErrorHandling_OutputsCorrectError(string expression, string expectedError)
+	{
+		Program program = new(expression);
+		ErrorObject errorObject = (ErrorObject)AST.Evaluator.Evaluate(program.Ast);
+
+		Assert.Equal(expectedError, errorObject.Message);
+	}
+}

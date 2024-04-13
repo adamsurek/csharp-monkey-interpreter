@@ -6,7 +6,7 @@ public static class Evaluator
 {
 	private static readonly BooleanObject TrueBooleanObject = new(true);
 	private static readonly BooleanObject FalseBooleanObject = new(false);
-	public static readonly NullObject NullObject = new();
+	private static readonly NullObject NullObject = new();
 
 	public static IObject Evaluate(INode node)
 	{
@@ -22,13 +22,37 @@ public static class Evaluator
 				}
 				return Evaluate(expressionStatement.Expression);
 			
+			case ReturnStatement returnStatement:
+				IObject value = Evaluate(returnStatement.ReturnValue);
+				if (value.Type() == ObjectTypeEnum.Error)
+				{
+					return value;
+				}
+				
+				return new ReturnValueObject(value);
+			
 			case PrefixExpression prefixExpression:
 				IObject prefixRight = Evaluate(prefixExpression.Right);
+				if (prefixRight.Type() == ObjectTypeEnum.Error)
+				{
+					return prefixRight;
+				}
+				
 				return EvaluatePrefixExpression(prefixExpression.Operator, prefixRight);
 			
 			case InfixExpression infixExpression:
 				IObject infixLeft = Evaluate(infixExpression.Left);
+				if (infixLeft.Type() == ObjectTypeEnum.Error)
+				{
+					return infixLeft;
+				}
+				
 				IObject infixRight = Evaluate(infixExpression.Right);
+				if (infixRight.Type() == ObjectTypeEnum.Error)
+				{
+					return infixRight;
+				}
+				
 				return EvaluateInfixExpression(infixExpression.Operator, infixLeft, infixRight);
 			
 			case BlockStatement blockStatement:
@@ -36,10 +60,6 @@ public static class Evaluator
 			
 			case IfExpression ifExpression:
 				return EvaluateIfExpression(ifExpression);
-			
-			case ReturnStatement returnStatement:
-				IObject value = Evaluate(returnStatement.ReturnValue);
-				return new ReturnValueObject(value);
 			
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
@@ -65,9 +85,13 @@ public static class Evaluator
 		{
 			result = Evaluate(statement);
 
-			if (result is ReturnValueObject returnValueObject)
+			switch (result)
 			{
-				return returnValueObject.Value;
+				case ReturnValueObject returnValueObject:
+					return returnValueObject.Value;
+				
+				case ErrorObject errorObject:
+					return errorObject;
 			}
 		}
 
@@ -83,7 +107,7 @@ public static class Evaluator
 			case "-":
 				return EvaluateMinusOperatorExpression(right);
 			default:
-				return NullObject;
+				return GenerateError("Unknown operator: {0}{1}", @operator, right.Type());
 		}
 	}
 
@@ -105,7 +129,7 @@ public static class Evaluator
 	{
 		if (right.Type() != ObjectTypeEnum.Integer)
 		{
-			return NullObject;
+			return GenerateError("Unknown operator: -{0}", right.Type());
 		}
 		
 		return new IntegerObject(-((IntegerObject)right).Value);
@@ -124,8 +148,13 @@ public static class Evaluator
 			case true when @operator == "!=":
 				return left != right ? TrueBooleanObject : FalseBooleanObject;
 			
+			case true when left.Type() != right.Type():
+				return GenerateError("Type mismatch: {0} {1} {2}",
+					left.Type(), @operator, right.Type());
+			
 			default:
-				return NullObject;
+				return GenerateError("Unknown operator: {0} {1} {2}",
+					left.Type(), @operator, right.Type());
 		}
 	}
 
@@ -137,7 +166,7 @@ public static class Evaluator
 		{
 			result = Evaluate(statement);
 
-			if (result != NullObject && result.Type() == ObjectTypeEnum.ReturnValue)
+			if (result != NullObject && (result.Type() == ObjectTypeEnum.ReturnValue || result.Type() == ObjectTypeEnum.Error))
 			{
 				return result;
 			}
@@ -170,26 +199,35 @@ public static class Evaluator
 			case "!=":
 				return leftValue != rightValue ? TrueBooleanObject : FalseBooleanObject;
 			default:
-				return NullObject;
+				return GenerateError("Unknown operator: {0} {1} {2}",
+					left.Type(), @operator, right.Type());
 		}
 	}
 
 	private static IObject EvaluateIfExpression(IfExpression ifExpression)
 	{
 		IObject condition = Evaluate(ifExpression.Condition);
+		if (condition.Type() == ObjectTypeEnum.Error)
+		{
+			return condition;
+		}
 
 		if (IsTruthy(condition))
 		{
 			return Evaluate(ifExpression.Consequence);
 		}
-		else if (ifExpression.Alternative is not null)
+		
+		if (ifExpression.Alternative is not null)
 		{
 			return Evaluate(ifExpression.Alternative);
 		}
-		else
-		{
-			return NullObject;
-		}
+		
+		return NullObject;
+	}
+
+	private static ErrorObject GenerateError(string format, params object[] objects)
+	{
+		return new ErrorObject(string.Format(format, objects));
 	}
 
 	private static bool IsTruthy(IObject @object)
