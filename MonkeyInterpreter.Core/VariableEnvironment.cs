@@ -1,16 +1,21 @@
 ﻿namespace MonkeyInterpreter.Core;
 
-public static class Environment
+public class VariableEnvironment
 {
-	private static readonly Dictionary<string, IObject> Store = new();
+	private readonly Dictionary<string, IObject> _store;
 
-	public static IObject? Get(string key)
+	public VariableEnvironment()
 	{
-		return Store.GetValueOrDefault(key);
+		_store = new Dictionary<string, IObject>();
 	}
 
-	public static void Set(string key, IObject value)
+	public IObject? Get(string key)
 	{
-		Store.Add(key, value);
+		return _store.GetValueOrDefault(key);
+	}
+
+	public void Set(string key, IObject value)
+	{
+		_store.Add(key, value);
 	}
 }

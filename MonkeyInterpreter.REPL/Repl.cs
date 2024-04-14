@@ -9,6 +9,8 @@ public static class Repl
 
 	public static void Start(TextReader reader, TextWriter writer)
 	{
+		VariableEnvironment env = new();
+		
 		while (true)
 		{
 			writer.Write(Prompt);
@@ -31,12 +33,11 @@ public static class Repl
 				continue;
 			}
 
-			IObject? evaluatedObject = Evaluator.Evaluate(ast);
+			IObject evaluatedObject = Evaluator.Evaluate(ast, env);
 
-			if (evaluatedObject is not null)
+			if (evaluatedObject.Type() != ObjectTypeEnum.Null)
 			{
 				writer.WriteLine(evaluatedObject.Inspect());
-				// writer.WriteLine();
 			}
 
 		}

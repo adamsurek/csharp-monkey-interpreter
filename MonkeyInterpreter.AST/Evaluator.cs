@@ -8,31 +8,44 @@ public static class Evaluator
 	private static readonly BooleanObject FalseBooleanObject = new(false);
 	private static readonly NullObject NullObject = new();
 
-	public static IObject Evaluate(INode node)
+	public static IObject Evaluate(INode node, VariableEnvironment env)
 	{
 		switch (node)
 		{
 			case AbstractSyntaxTree ast:
-				return EvaluateAst(ast);
+				return EvaluateAst(ast, env);
 			
 			case ExpressionStatement expressionStatement:
 				if (expressionStatement.Expression is null)
 				{
 					return NullObject;
 				}
-				return Evaluate(expressionStatement.Expression);
+				return Evaluate(expressionStatement.Expression, env);
+			
+			case LetStatement letStatement:
+				IObject letValue = Evaluate(letStatement.Value, env);
+				if (letValue.Type() == ObjectTypeEnum.Error)
+				{
+					return letValue;
+				}
+				env.Set(letStatement.Name.Value, letValue);
+				
+				return NullObject;
+			
+			case Identifier identifier:
+				return EvaluateIdentifier(identifier, env);
 			
 			case ReturnStatement returnStatement:
-				IObject value = Evaluate(returnStatement.ReturnValue);
-				if (value.Type() == ObjectTypeEnum.Error)
+				IObject returnValue = Evaluate(returnStatement.ReturnValue, env);
+				if (returnValue.Type() == ObjectTypeEnum.Error)
 				{
-					return value;
+					return returnValue;
 				}
 				
-				return new ReturnValueObject(value);
+				return new ReturnValueObject(returnValue);
 			
 			case PrefixExpression prefixExpression:
-				IObject prefixRight = Evaluate(prefixExpression.Right);
+				IObject prefixRight = Evaluate(prefixExpression.Right, env);
 				if (prefixRight.Type() == ObjectTypeEnum.Error)
 				{
 					return prefixRight;
@@ -41,13 +54,13 @@ public static class Evaluator
 				return EvaluatePrefixExpression(prefixExpression.Operator, prefixRight);
 			
 			case InfixExpression infixExpression:
-				IObject infixLeft = Evaluate(infixExpression.Left);
+				IObject infixLeft = Evaluate(infixExpression.Left, env);
 				if (infixLeft.Type() == ObjectTypeEnum.Error)
 				{
 					return infixLeft;
 				}
 				
-				IObject infixRight = Evaluate(infixExpression.Right);
+				IObject infixRight = Evaluate(infixExpression.Right, env);
 				if (infixRight.Type() == ObjectTypeEnum.Error)
 				{
 					return infixRight;
@@ -56,10 +69,10 @@ public static class Evaluator
 				return EvaluateInfixExpression(infixExpression.Operator, infixLeft, infixRight);
 			
 			case BlockStatement blockStatement:
-				return EvaluateBlockStatement(blockStatement);
+				return EvaluateBlockStatement(blockStatement, env);
 			
 			case IfExpression ifExpression:
-				return EvaluateIfExpression(ifExpression);
+				return EvaluateIfExpression(ifExpression, env);
 			
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
@@ -74,16 +87,15 @@ public static class Evaluator
 			default:
 				return NullObject;
 		}
-
 	}
 
-	private static IObject EvaluateAst(AbstractSyntaxTree ast)
+	private static IObject EvaluateAst(AbstractSyntaxTree ast, VariableEnvironment env)
 	{
 		IObject result = NullObject;
 		
 		foreach (IStatement statement in ast.Statements)
 		{
-			result = Evaluate(statement);
+			result = Evaluate(statement, env);
 
 			switch (result)
 			{
@@ -96,6 +108,17 @@ public static class Evaluator
 		}
 
 		return result;
+	}
+
+	private static IObject EvaluateIdentifier(Identifier identifier, VariableEnvironment env)
+	{
+		IObject? value = env.Get(identifier.Value);
+		if (value is null)
+		{
+			return GenerateError("Identifier not found: {0}", identifier.Value);
+		}
+
+		return value;
 	}
 
 	private static IObject EvaluatePrefixExpression(string @operator, IObject right)
@@ -158,13 +181,13 @@ public static class Evaluator
 		}
 	}
 
-	private static IObject EvaluateBlockStatement(BlockStatement blockStatement)
+	private static IObject EvaluateBlockStatement(BlockStatement blockStatement, VariableEnvironment env)
 	{
 		IObject result = NullObject;
 		
 		foreach (IStatement statement in blockStatement.Statements)
 		{
-			result = Evaluate(statement);
+			result = Evaluate(statement, env);
 
 			if (result != NullObject && (result.Type() == ObjectTypeEnum.ReturnValue || result.Type() == ObjectTypeEnum.Error))
 			{
@@ -204,9 +227,9 @@ public static class Evaluator
 		}
 	}
 
-	private static IObject EvaluateIfExpression(IfExpression ifExpression)
+	private static IObject EvaluateIfExpression(IfExpression ifExpression, VariableEnvironment env)
 	{
-		IObject condition = Evaluate(ifExpression.Condition);
+		IObject condition = Evaluate(ifExpression.Condition, env);
 		if (condition.Type() == ObjectTypeEnum.Error)
 		{
 			return condition;
@@ -214,12 +237,12 @@ public static class Evaluator
 
 		if (IsTruthy(condition))
 		{
-			return Evaluate(ifExpression.Consequence);
+			return Evaluate(ifExpression.Consequence, env);
 		}
 		
 		if (ifExpression.Alternative is not null)
 		{
-			return Evaluate(ifExpression.Alternative);
+			return Evaluate(ifExpression.Alternative, env);
 		}
 		
 		return NullObject;
