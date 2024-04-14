@@ -6,15 +6,15 @@ namespace MonkeyInterpreter.AST;
 public class LetStatement : IStatement
 {
 	private readonly Token _token;
-	private readonly IExpression _value;
 	
-	public Identifier Name;
+	public readonly IExpression Value;
+	public readonly Identifier Name;
 	
 	public LetStatement(Token token, Identifier name, IExpression value)
 	{
 		_token = token;
 		Name = name;
-		_value = value;
+		Value = value;
 	}
 
 	public string TokenLiteral()
@@ -28,7 +28,7 @@ public class LetStatement : IStatement
 		stringBuilder.Append(TokenLiteral() + " ");
 		stringBuilder.Append(Name.String());
 		stringBuilder.Append(" = ");
-		stringBuilder.Append(_value.String());
+		stringBuilder.Append(Value.String());
 		stringBuilder.Append(';');
 		return stringBuilder.ToString();
 	}
