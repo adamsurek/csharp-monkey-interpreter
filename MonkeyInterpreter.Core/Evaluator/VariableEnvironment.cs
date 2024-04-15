@@ -1,4 +1,4 @@
-﻿namespace MonkeyInterpreter.Core;
+﻿namespace MonkeyInterpreter.Core.Evaluator;
 
 public class VariableEnvironment
 {

@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using MonkeyInterpreter.Core.Parser;
 using Xunit.Abstractions;
 
 namespace MonkeyInterpreter.Tests.Lexer;
@@ -118,7 +119,7 @@ public class LexerTest
 			new() { Token.Eof, "" },
 		};
 		
-		Lexer lexer = new Lexer(input);
+		Core.Parser.Lexer lexer = new Core.Parser.Lexer(input);
 
 		for (int x = 0; x < tests.Count; x++)
 		{

@@ -1,4 +1,4 @@
-﻿namespace MonkeyInterpreter.Core;
+﻿namespace MonkeyInterpreter.Core.Parser;
 
 public class Token(string type, string literal)
 {

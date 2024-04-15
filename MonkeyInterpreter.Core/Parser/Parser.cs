@@ -1,6 +1,6 @@
-﻿using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
 
-namespace MonkeyInterpreter.AST;
+namespace MonkeyInterpreter.Core.Parser;
 
 // TODO: Add method XML comments
 
@@ -71,9 +71,9 @@ public class Parser
 		RegisterInfixFunction(Token.LParen, ParseCallExpression);
 	}
 
-	public AbstractSyntaxTree ParseProgram()
+	public AbstractSyntaxTree.AbstractSyntaxTree ParseProgram()
 	{
-		AbstractSyntaxTree abstractSyntaxTree = new();
+		AbstractSyntaxTree.AbstractSyntaxTree abstractSyntaxTree = new();
 		abstractSyntaxTree.Statements = new List<IStatement>();
 		
 		while (_currentToken.Type != Token.Eof)

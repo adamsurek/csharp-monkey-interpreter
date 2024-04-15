@@ -6,10 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonkeyInterpreter.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonkeyInterpreter.REPL", "MonkeyInterpreter.REPL\MonkeyInterpreter.REPL.csproj", "{F2C2AEF3-CF80-410D-A3E1-9CF83C524D1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonkeyInterpreter.CLI", "MonkeyInterpreter.CLI\MonkeyInterpreter.CLI.csproj", "{1CC49FD7-E8AA-497D-925F-773A06439E01}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonkeyInterpreter.AST", "MonkeyInterpreter.AST\MonkeyInterpreter.AST.csproj", "{AB78D295-FE37-42B2-B9EF-26043FCDDEB0}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,13 +24,5 @@ Global
 		{F2C2AEF3-CF80-410D-A3E1-9CF83C524D1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2C2AEF3-CF80-410D-A3E1-9CF83C524D1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2C2AEF3-CF80-410D-A3E1-9CF83C524D1C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1CC49FD7-E8AA-497D-925F-773A06439E01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1CC49FD7-E8AA-497D-925F-773A06439E01}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1CC49FD7-E8AA-497D-925F-773A06439E01}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1CC49FD7-E8AA-497D-925F-773A06439E01}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AB78D295-FE37-42B2-B9EF-26043FCDDEB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AB78D295-FE37-42B2-B9EF-26043FCDDEB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AB78D295-FE37-42B2-B9EF-26043FCDDEB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AB78D295-FE37-42B2-B9EF-26043FCDDEB0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,4 +1,4 @@
-﻿namespace MonkeyInterpreter.AST;
+﻿namespace MonkeyInterpreter.Core.AbstractSyntaxTree;
 
 public interface INode
 {

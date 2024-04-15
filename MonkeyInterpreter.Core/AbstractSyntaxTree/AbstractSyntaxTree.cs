@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace MonkeyInterpreter.AST;
+namespace MonkeyInterpreter.Core.AbstractSyntaxTree;
 
 public class AbstractSyntaxTree : INode
 {

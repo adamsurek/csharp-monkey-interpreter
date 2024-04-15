@@ -1,5 +1,7 @@
-﻿using MonkeyInterpreter.AST;
-using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.Core;
+using MonkeyInterpreter.Core.AbstractSyntaxTree;
+using MonkeyInterpreter.Core.Evaluator;
+using MonkeyInterpreter.Core.Parser;
 
 namespace MonkeyInterpreter.REPL;
 

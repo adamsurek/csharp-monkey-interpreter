@@ -1,21 +1,21 @@
 ﻿using System.Collections;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using MonkeyInterpreter.Core.AbstractSyntaxTree;
 using Xunit.Abstractions;
-using MonkeyInterpreter.AST;
 
 namespace MonkeyInterpreter.Tests.Parser;
 
 public class Program
 {
-	public Core.Lexer Lexer;
-	public AST.Parser Parser;
+	public Core.Parser.Lexer Lexer;
+	public Core.Parser.Parser Parser;
 	public AbstractSyntaxTree Ast;
 	
 	public Program(string expression)
 	{
-		Lexer = new Core.Lexer(expression);
-		Parser = new AST.Parser(Lexer);
+		Lexer = new Core.Parser.Lexer(expression);
+		Parser = new Core.Parser.Parser(Lexer);
 		Ast = Parser.ParseProgram();
 	}
 }

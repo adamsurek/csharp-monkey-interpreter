@@ -1,18 +1,19 @@
-﻿using MonkeyInterpreter.AST;
-using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.Core;
+using MonkeyInterpreter.Core.AbstractSyntaxTree;
+using MonkeyInterpreter.Core.Evaluator;
 
 namespace MonkeyInterpreter.Tests.Evaluator;
 
 public class Program
 {
-	public Core.Lexer Lexer;
-	public AST.Parser Parser;
+	public Core.Parser.Lexer Lexer;
+	public Core.Parser.Parser Parser;
 	public AbstractSyntaxTree Ast;
 	
 	public Program(string expression)
 	{
-		Lexer = new Core.Lexer(expression);
-		Parser = new AST.Parser(Lexer);
+		Lexer = new Core.Parser.Lexer(expression);
+		Parser = new Core.Parser.Parser(Lexer);
 		Ast = Parser.ParseProgram();
 	}
 }
@@ -38,7 +39,7 @@ public class GenericTests
 	{
 		Program program = new(expression);
 		VariableEnvironment env = new();
-		IObject evaluatedObject = AST.Evaluator.Evaluate(program.Ast, env);
+		IObject evaluatedObject = Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.IsType(expectedType, evaluatedObject);
 	}
@@ -68,7 +69,7 @@ public class IntegerEvaluationTests
 	{
 		Program program = new(expression);
 		VariableEnvironment env = new();
-		IntegerObject evaluatedObject = (IntegerObject)AST.Evaluator.Evaluate(program.Ast, env);
+		IntegerObject evaluatedObject = (IntegerObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
 	}
@@ -103,7 +104,7 @@ public class BooleanEvaluationTests
 	{
 		Program program = new(expression);
 		VariableEnvironment env = new();
-		BooleanObject evaluatedObject = (BooleanObject)AST.Evaluator.Evaluate(program.Ast, env);
+		BooleanObject evaluatedObject = (BooleanObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
 	}
@@ -122,7 +123,7 @@ public class ConditionalExpressionTests
 	{
 		Program program = new(expression);
 		VariableEnvironment env = new();
-		object? actualValue = AST.Evaluator.Evaluate(program.Ast, env) switch
+		object? actualValue = Core.Evaluator.Evaluator.Evaluate(program.Ast, env) switch
 		{
 			IntegerObject integerObject => integerObject.Value,
 			_ => null
@@ -144,7 +145,7 @@ public class ReturnStatementTests
 	{
 		Program program = new(expression);
 		VariableEnvironment env = new();
-		object? actualValue = AST.Evaluator.Evaluate(program.Ast, env) switch
+		object? actualValue = Core.Evaluator.Evaluator.Evaluate(program.Ast, env) switch
 		{
 			IntegerObject integerObject => integerObject.Value,
 			_ => null
@@ -169,7 +170,7 @@ public class ErrorHandlingTests
 	{
 		Program program = new(expression);
 		VariableEnvironment env = new();
-		ErrorObject errorObject = (ErrorObject)AST.Evaluator.Evaluate(program.Ast, env);
+		ErrorObject errorObject = (ErrorObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.Equal(expectedError, errorObject.Message);
 	}
