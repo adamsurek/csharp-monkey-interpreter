@@ -1,6 +1,6 @@
-﻿using MonkeyInterpreter.Core;
+﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
 
-namespace MonkeyInterpreter.AST;
+namespace MonkeyInterpreter.Core.Evaluator;
 
 public static class Evaluator
 {
@@ -12,7 +12,7 @@ public static class Evaluator
 	{
 		switch (node)
 		{
-			case AbstractSyntaxTree ast:
+			case AbstractSyntaxTree.AbstractSyntaxTree ast:
 				return EvaluateAst(ast, env);
 			
 			case ExpressionStatement expressionStatement:
@@ -89,7 +89,7 @@ public static class Evaluator
 		}
 	}
 
-	private static IObject EvaluateAst(AbstractSyntaxTree ast, VariableEnvironment env)
+	private static IObject EvaluateAst(AbstractSyntaxTree.AbstractSyntaxTree ast, VariableEnvironment env)
 	{
 		IObject result = NullObject;
 		

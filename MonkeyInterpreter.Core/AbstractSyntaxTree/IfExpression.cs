@@ -1,7 +1,7 @@
 ﻿using System.Text;
-using MonkeyInterpreter.Core;
+using MonkeyInterpreter.Core.Parser;
 
-namespace MonkeyInterpreter.AST;
+namespace MonkeyInterpreter.Core.AbstractSyntaxTree;
 
 public class IfExpression : IExpression
 {

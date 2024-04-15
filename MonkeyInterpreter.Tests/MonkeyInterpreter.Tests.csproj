@@ -23,7 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MonkeyInterpreter.AST\MonkeyInterpreter.AST.csproj" />
       <ProjectReference Include="..\MonkeyInterpreter.Core\MonkeyInterpreter.Core.csproj" />
     </ItemGroup>
 

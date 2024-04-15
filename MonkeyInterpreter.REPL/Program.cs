@@ -1,6 +1,4 @@
-﻿using MonkeyInterpreter.REPL;
-
-namespace MonkeyInterpreter.CLI;
+﻿namespace MonkeyInterpreter.REPL;
 
 public static class Program
 {
