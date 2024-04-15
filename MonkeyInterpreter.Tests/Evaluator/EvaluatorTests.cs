@@ -37,7 +37,8 @@ public class GenericTests
 	public void EvalResult_IsExpectedObjectType(string expression, Type expectedType)
 	{
 		Program program = new(expression);
-		IObject evaluatedObject = AST.Evaluator.Evaluate(program.Ast)!;
+		VariableEnvironment env = new();
+		IObject evaluatedObject = AST.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.IsType(expectedType, evaluatedObject);
 	}
@@ -59,10 +60,15 @@ public class IntegerEvaluationTests
 	[InlineData("-2 * 3 / 6", -1)]
 	[InlineData("(1 + 3) / 2", 2)]
 	[InlineData("((10 + 10) - 20) / 2", 0)]
+	[InlineData("let a = 5; a;", 5)]
+	[InlineData("let a = 5 * 5; a;", 25)]
+	[InlineData("let a = 5; let b = a; b;", 5)]
+	[InlineData("let a = 5; let b = a; let c = a + b + 5; c;", 15)]
 	public void IntegerObject_HasExpectedValue(string expression, int expectedValue)
 	{
 		Program program = new(expression);
-		IntegerObject evaluatedObject = (IntegerObject)AST.Evaluator.Evaluate(program.Ast)!;
+		VariableEnvironment env = new();
+		IntegerObject evaluatedObject = (IntegerObject)AST.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
 	}
@@ -96,7 +102,8 @@ public class BooleanEvaluationTests
 	public void BooleanObject_HasExpectedValue(string expression, bool expectedValue)
 	{
 		Program program = new(expression);
-		BooleanObject evaluatedObject = (BooleanObject)AST.Evaluator.Evaluate(program.Ast)!;
+		VariableEnvironment env = new();
+		BooleanObject evaluatedObject = (BooleanObject)AST.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.Equal(expectedValue, evaluatedObject.Value);
 	}
@@ -114,7 +121,8 @@ public class ConditionalExpressionTests
 	public void ConditionalExpression_EvaluatesCorrectExpression(string expression, object? expectedValue)
 	{
 		Program program = new(expression);
-		object? actualValue = AST.Evaluator.Evaluate(program.Ast) switch
+		VariableEnvironment env = new();
+		object? actualValue = AST.Evaluator.Evaluate(program.Ast, env) switch
 		{
 			IntegerObject integerObject => integerObject.Value,
 			_ => null
@@ -131,16 +139,38 @@ public class ReturnStatementTests
 	[InlineData("return 10; 9;", 10)]
 	[InlineData("return 6 * 2; 9;", 12)]
 	[InlineData("15; return 6 * 2; 9;", 12)]
-	// [InlineData("if (10 > 1) { if (10 > 1) {return 6 * 2;} return 1; }", 12)]
+	[InlineData("if (10 > 1) { if (10 > 1) {return 6 * 2;} return 1; }", 12)]
 	public void ReturnStatements_HasExpectedValue(string expression, object expectedValue)
 	{
 		Program program = new(expression);
-		object? actualValue = AST.Evaluator.Evaluate(program.Ast) switch
+		VariableEnvironment env = new();
+		object? actualValue = AST.Evaluator.Evaluate(program.Ast, env) switch
 		{
 			IntegerObject integerObject => integerObject.Value,
 			_ => null
 		};
 		
 		Assert.Equal(expectedValue, actualValue);
+	}
+}
+
+public class ErrorHandlingTests
+{
+	[Theory]
+	[InlineData("5 + true","Type mismatch: Integer + Boolean")]
+	[InlineData("5 + true; 5;","Type mismatch: Integer + Boolean")]
+	[InlineData("-true","Unknown operator: -Boolean")]
+	[InlineData("true + false","Unknown operator: Boolean + Boolean")]
+	[InlineData("5; true + false; 5;","Unknown operator: Boolean + Boolean")]
+	[InlineData("if (10 > 1) { true + false; }","Unknown operator: Boolean + Boolean")]
+	[InlineData("if (10 > 1) { if (10 > 1) { return true + false; } return 1; }","Unknown operator: Boolean + Boolean")]
+	[InlineData("foobar", "Identifier not found: foobar")]
+	public void ErrorHandling_OutputsCorrectError(string expression, string expectedError)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		ErrorObject errorObject = (ErrorObject)AST.Evaluator.Evaluate(program.Ast, env);
+
+		Assert.Equal(expectedError, errorObject.Message);
 	}
 }
