@@ -6,13 +6,15 @@ namespace MonkeyInterpreter.Core.AbstractSyntaxTree;
 public class FunctionLiteral : IExpression
 {
     private readonly Token _token;
-    
-    public List<Identifier>? Parameters = new();
-    public BlockStatement? Body;
 
-    public FunctionLiteral(Token token)
+    public List<Identifier> Parameters;
+    public BlockStatement Body;
+
+    public FunctionLiteral(Token token, List<Identifier> parameters, BlockStatement body)
     {
         _token = token;
+        Parameters = parameters;
+        Body = body;
     }
 
     public string TokenLiteral()
@@ -25,12 +27,9 @@ public class FunctionLiteral : IExpression
         StringBuilder stringBuilder = new();
         List<string> parameters = new();
 
-        if (Parameters is not null)
+        foreach(Identifier parameter in Parameters)
         {
-            foreach(Identifier parameter in Parameters)
-            {
-                parameters.Add(parameter.String());
-            }
+            parameters.Add(parameter.String());
         }
             
         stringBuilder.Append(TokenLiteral());

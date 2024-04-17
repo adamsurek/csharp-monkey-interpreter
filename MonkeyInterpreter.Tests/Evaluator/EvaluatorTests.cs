@@ -35,6 +35,7 @@ public class GenericTests
 	[InlineData("return 10;", typeof(IntegerObject))]
 	[InlineData("return 10; 9;", typeof(IntegerObject))]
 	[InlineData("", typeof(NullObject))]
+	[InlineData("fn(x) { x + 2; }; ", typeof(FunctionObject))]
 	public void EvalResult_IsExpectedObjectType(string expression, Type expectedType)
 	{
 		Program program = new(expression);
@@ -65,6 +66,13 @@ public class IntegerEvaluationTests
 	[InlineData("let a = 5 * 5; a;", 25)]
 	[InlineData("let a = 5; let b = a; b;", 5)]
 	[InlineData("let a = 5; let b = a; let c = a + b + 5; c;", 15)]
+	[InlineData("let identity = fn(x) { x; }; identity(5);", 5)]
+    [InlineData("let identity = fn(x) { return x; }; identity(5);", 5)]
+    [InlineData("let double = fn(x) { x * 2; }; double(5);", 10)]
+    [InlineData("let add = fn(x, y) { x + y; }; add(5, 5);", 10)]
+    [InlineData("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20)]
+    [InlineData("fn(x) { x; }(5)", 5)]
+    [InlineData("let test = fn(x) { fn(y) { x + y }; }; let fuck = test(2); fuck(2);", 4)]
 	public void IntegerObject_HasExpectedValue(string expression, int expectedValue)
 	{
 		Program program = new(expression);
@@ -173,5 +181,49 @@ public class ErrorHandlingTests
 		ErrorObject errorObject = (ErrorObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.Equal(expectedError, errorObject.Message);
+	}
+}
+
+public class FunctionObjectTests
+{
+	[Theory]
+	[InlineData("fn(x) { x + 2; };", 1)]
+	[InlineData("fn(x, y) { x + y; };", 2)]
+	[InlineData("fn() { 1 + 2; };", 0)]
+	public void FunctionObject_HasExpectedParameterCount(string expression, int expectedParameterCounter)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		FunctionObject functionObject = (FunctionObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+		
+		Assert.Equal(expectedParameterCounter, functionObject.Parameters.Count);
+	}
+	
+	[Theory]
+	[InlineData("fn(x) { x + 2; };", new[] { "x" })]
+	[InlineData("fn(x, y) { x + y; };", new[] {"x", "y"})]
+	[InlineData("fn() { 1 + 2; };", new string[] {})]
+	public void FunctionObject_HasExpectedParameterNames(string expression, string[]? expectedParameterNames)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		FunctionObject functionObject = (FunctionObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+
+		List<string> identifiers = functionObject.Parameters.Select(identifier => identifier.TokenLiteral()).ToList();
+		
+		Assert.Equal(expectedParameterNames, identifiers);
+	}
+	
+	[Theory]
+	[InlineData("fn(x) { x + 2; };", "(x+2)")]
+	[InlineData("fn(x, y) { x + y; };", "(x+y)")]
+	[InlineData("fn() { 1 + 2; };", "(1+2)")]
+	public void FunctionObject_HasExpectedBody(string expression, string expectedBody)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		FunctionObject functionObject = (FunctionObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+
+		Assert.Equal(expectedBody, functionObject.Body.String());
 	}
 }

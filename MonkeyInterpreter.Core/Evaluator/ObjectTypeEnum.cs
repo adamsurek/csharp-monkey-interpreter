@@ -6,5 +6,6 @@ public enum ObjectTypeEnum
 	Integer,
 	Boolean,
 	ReturnValue,
+	Function,
 	Error
 }

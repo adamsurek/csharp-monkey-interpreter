@@ -304,23 +304,26 @@ public class Parser
 
 	private IExpression? ParseFunctionLiteral()
 	{
-		FunctionLiteral functionLiteral = new FunctionLiteral(_currentToken);
+		Token currentToken = _currentToken;
 
 		if (!ExpectPeek(Token.LParen))
 		{
 			return null;
 		}
 
-		functionLiteral.Parameters = ParseFunctionParameters();
+		List<Identifier>? parameters = ParseFunctionParameters();
+
+		if (parameters is null)
+		{
+			parameters = new List<Identifier>();
+		}
 
 		if (!ExpectPeek(Token.LBrace))
 		{
 			return null;
 		}
 
-		functionLiteral.Body = ParseBlockStatement();
-
-		return functionLiteral;
+		return new FunctionLiteral(currentToken, parameters, ParseBlockStatement());
 	}
 	
 
@@ -379,7 +382,7 @@ public class Parser
 
 	private IExpression? ParseCallExpression(IExpression function)
 	{
-		List<IExpression?>? arguments = ParseCallArguments();
+		List<IExpression>? arguments = ParseCallArguments();
 
 		if (arguments is null)
 		{
@@ -389,9 +392,9 @@ public class Parser
 		return new CallExpression(_currentToken, function, arguments);
 	}
 
-	private List<IExpression?>? ParseCallArguments()
+	private List<IExpression>? ParseCallArguments()
 	{
-		List<IExpression?> arguments = new();
+		List<IExpression> arguments = new();
 
 		if (IsPeekToken(Token.RParen))
 		{
@@ -400,13 +403,27 @@ public class Parser
 		}
 		
 		NextToken();
-		arguments.Add(ParseExpression(TokenPrecedence.Lowest));
+
+		IExpression? argument = ParseExpression(TokenPrecedence.Lowest);
+		if (argument is not null)
+		{
+			arguments.Add(argument);
+		}
+		
+		// arguments.Add(ParseExpression(TokenPrecedence.Lowest));
 
 		while (IsPeekToken(Token.Comma))
 		{
 			NextToken();
 			NextToken();
-			arguments.Add(ParseExpression(TokenPrecedence.Lowest));
+
+			argument = ParseExpression(TokenPrecedence.Lowest);
+			if (argument is not null)
+			{
+				arguments.Add(argument);
+			}
+			
+			// arguments.Add(ParseExpression(TokenPrecedence.Lowest));
 		}
 
 		if (!ExpectPeek(Token.RParen))

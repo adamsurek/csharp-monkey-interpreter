@@ -8,9 +8,9 @@ public class CallExpression : IExpression
 	private readonly Token _token;
 	
 	public readonly IExpression Function;
-	public readonly List<IExpression?> Arguments;
+	public readonly List<IExpression> Arguments;
 
-	public CallExpression(Token token, IExpression function, List<IExpression?> arguments)
+	public CallExpression(Token token, IExpression function, List<IExpression> arguments)
 	{
 		_token = token;
 		Function = function;
@@ -30,10 +30,7 @@ public class CallExpression : IExpression
 
 		foreach (IExpression? argument in Arguments)
 		{
-			if (argument is not null)
-			{
-				arguments.Add(argument.String());
-			}
+			arguments.Add(argument.String());
 		}
 
 		stringBuilder.Append(Function.String());

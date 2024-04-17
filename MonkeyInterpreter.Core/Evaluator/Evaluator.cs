@@ -35,6 +35,26 @@ public static class Evaluator
 			case Identifier identifier:
 				return EvaluateIdentifier(identifier, env);
 			
+			case FunctionLiteral functionLiteral:
+				List<Identifier> parameters = functionLiteral.Parameters;
+				BlockStatement body = functionLiteral.Body;
+				return new FunctionObject(parameters, body, env);
+			
+			case CallExpression callExpression:
+				IObject function = Evaluate(callExpression.Function, env);
+				if (function.Type() == ObjectTypeEnum.Error)
+				{
+					return function;
+				}
+
+				List<IObject> arguments = EvaluateExpressions(callExpression.Arguments, env);
+				if (arguments.Count == 1 && arguments[0].Type() == ObjectTypeEnum.Error)
+				{
+					return arguments[0];
+				}
+
+				return ApplyFunction(function, arguments);
+
 			case ReturnStatement returnStatement:
 				IObject returnValue = Evaluate(returnStatement.ReturnValue, env);
 				if (returnValue.Type() == ObjectTypeEnum.Error)
@@ -108,6 +128,59 @@ public static class Evaluator
 		}
 
 		return result;
+	}
+
+	private static List<IObject> EvaluateExpressions(List<IExpression> expressions, VariableEnvironment env)
+	{
+		List<IObject> result = new();
+
+		foreach (IExpression expression in expressions)
+		{
+			IObject evaluated = Evaluate(expression, env);
+			if (evaluated.Type() == ObjectTypeEnum.Error)
+			{
+				return new List<IObject> { evaluated };
+			}
+			
+			result.Add(evaluated);
+		}
+
+		return result;
+	}
+
+	private static IObject ApplyFunction(IObject function, List<IObject> arguments)
+	{
+		if (function is not FunctionObject functionObject)
+		{
+			return GenerateError("Not a function: {0}", function.Type());
+		}
+
+		VariableEnvironment extendedEnvironment = ExtendFunctionEnvironment(functionObject, arguments);
+		IObject evaluated = Evaluate(functionObject.Body, extendedEnvironment);
+
+		return UnwrapReturnValue(evaluated);
+	}
+
+	private static VariableEnvironment ExtendFunctionEnvironment(FunctionObject function, List<IObject> arguments)
+	{
+		VariableEnvironment environment = new VariableEnvironment().EncloseEnvironment(function.VariableEnvironment);
+
+		for (int i = 0; i < function.Parameters.Count; i++)
+		{
+			environment.Set(function.Parameters[i].Value, arguments[i]);
+		}
+
+		return environment;
+	}
+
+	private static IObject UnwrapReturnValue(IObject @object)
+	{
+		if (@object is ReturnValueObject returnValueObject)
+		{
+			return returnValueObject;
+		}
+
+		return @object;
 	}
 
 	private static IObject EvaluateIdentifier(Identifier identifier, VariableEnvironment env)
