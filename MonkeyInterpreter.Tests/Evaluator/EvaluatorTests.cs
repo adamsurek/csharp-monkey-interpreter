@@ -72,7 +72,7 @@ public class IntegerEvaluationTests
     [InlineData("let add = fn(x, y) { x + y; }; add(5, 5);", 10)]
     [InlineData("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20)]
     [InlineData("fn(x) { x; }(5)", 5)]
-    [InlineData("let test = fn(x) { fn(y) { x + y }; }; let fuck = test(2); fuck(2);", 4)]
+    [InlineData("let add = fn(x) { fn(y) { x + y }; }; let wrapper = add(2); wrapper(2);", 4)]
 	public void IntegerObject_HasExpectedValue(string expression, int expectedValue)
 	{
 		Program program = new(expression);
@@ -144,6 +144,8 @@ public class ConditionalExpressionTests
 	[InlineData("if (1 < 2) { 10 }", 10)]
 	[InlineData("if (1 > 2) { 10 }", null)]
 	[InlineData("if (1 > 2) { 10 } else { 5 }", 5)]
+	[InlineData("if (1 < 2) { \"hello\" } else { \"world\" }", "hello")]
+	[InlineData("if (1 > 2) { \"hello\" } else { \"world\" }", "world")]
 	public void ConditionalExpression_EvaluatesCorrectExpression(string expression, object? expectedValue)
 	{
 		Program program = new(expression);
@@ -151,6 +153,7 @@ public class ConditionalExpressionTests
 		object? actualValue = Core.Evaluator.Evaluator.Evaluate(program.Ast, env) switch
 		{
 			IntegerObject integerObject => integerObject.Value,
+			StringObject stringObject => stringObject.Value,
 			_ => null
 		};
 		
@@ -166,6 +169,7 @@ public class ReturnStatementTests
 	[InlineData("return 6 * 2; 9;", 12)]
 	[InlineData("15; return 6 * 2; 9;", 12)]
 	[InlineData("if (10 > 1) { if (10 > 1) {return 6 * 2;} return 1; }", 12)]
+	[InlineData("return \"hello world\";", "hello world")]
 	public void ReturnStatements_HasExpectedValue(string expression, object expectedValue)
 	{
 		Program program = new(expression);
@@ -173,6 +177,7 @@ public class ReturnStatementTests
 		object? actualValue = Core.Evaluator.Evaluator.Evaluate(program.Ast, env) switch
 		{
 			IntegerObject integerObject => integerObject.Value,
+			StringObject stringObject => stringObject.Value,
 			_ => null
 		};
 		
@@ -192,6 +197,8 @@ public class ErrorHandlingTests
 	[InlineData("if (10 > 1) { if (10 > 1) { return true + false; } return 1; }","Unknown operator: Boolean + Boolean")]
 	[InlineData("foobar", "Identifier not found: foobar")]
 	[InlineData("\"Hello\" - \"world\"", "Unknown operator: String - String")]
+	[InlineData("len(1)", "Argument to 'len' not supported. Expected String but got Integer")]
+	[InlineData("len(\"one\", \"two\")", "Wrong number of arguments. Got 2, expected 1")]
 	public void ErrorHandling_OutputsCorrectError(string expression, string expectedError)
 	{
 		Program program = new(expression);
@@ -243,5 +250,26 @@ public class FunctionObjectTests
 		FunctionObject functionObject = (FunctionObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
 
 		Assert.Equal(expectedBody, functionObject.Body.String());
+	}
+}
+
+public class BuiltInFunctionTests
+{
+	[Theory]
+	[InlineData("len(\"\")", 0)]
+	[InlineData("len(\"hello world\")", 11)]
+	[InlineData("len(\"test\")", 4)]
+	public void BuiltInFunction_ReturnsExpectedValue(string expression, object expectedValue)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		object? actualValue = Core.Evaluator.Evaluator.Evaluate(program.Ast, env) switch
+		{
+			IntegerObject integerObject => integerObject.Value,
+			StringObject stringObject => stringObject.Value,
+			_ => null
+		};
+		
+		Assert.Equal(expectedValue, actualValue);
 	}
 }

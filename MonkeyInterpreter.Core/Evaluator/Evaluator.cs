@@ -154,15 +154,22 @@ public static class Evaluator
 
 	private static IObject ApplyFunction(IObject function, List<IObject> arguments)
 	{
-		if (function is not FunctionObject functionObject)
+		switch (function)
 		{
-			return GenerateError("Not a function: {0}", function.Type());
+			case FunctionObject functionObject:
+				VariableEnvironment extendedEnvironment = ExtendFunctionEnvironment(functionObject, arguments);
+				IObject evaluated = Evaluate(functionObject.Body, extendedEnvironment);
+				return UnwrapReturnValue(evaluated);
+			
+			case BuiltInObject builtInObject:
+				return builtInObject.Function(arguments.ToArray());
+			
+			default:
+				return GenerateError("Not a function: {0}", function.Type());
 		}
+		
 
-		VariableEnvironment extendedEnvironment = ExtendFunctionEnvironment(functionObject, arguments);
-		IObject evaluated = Evaluate(functionObject.Body, extendedEnvironment);
 
-		return UnwrapReturnValue(evaluated);
 	}
 
 	private static VariableEnvironment ExtendFunctionEnvironment(FunctionObject function, List<IObject> arguments)
@@ -190,12 +197,18 @@ public static class Evaluator
 	private static IObject EvaluateIdentifier(Identifier identifier, VariableEnvironment env)
 	{
 		IObject? value = env.Get(identifier.Value);
-		if (value is null)
+		if (value is not null)
 		{
-			return GenerateError("Identifier not found: {0}", identifier.Value);
+			 return value;
 		}
 
-		return value;
+		value = BuiltIns.BuiltInFunctions.GetValueOrDefault(identifier.Value);
+		if (value is not null)
+		{
+			return value;
+		}
+			
+		return GenerateError("Identifier not found: {0}", identifier.Value);
 	}
 
 	private static IObject EvaluatePrefixExpression(string @operator, IObject right)
@@ -349,7 +362,7 @@ public static class Evaluator
 		return NullObject;
 	}
 
-	private static ErrorObject GenerateError(string format, params object[] objects)
+	public static ErrorObject GenerateError(string format, params object[] objects)
 	{
 		return new ErrorObject(string.Format(format, objects));
 	}

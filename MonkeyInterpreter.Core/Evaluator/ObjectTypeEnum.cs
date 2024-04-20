@@ -8,5 +8,6 @@ public enum ObjectTypeEnum
 	Boolean,
 	ReturnValue,
 	Function,
+	BuiltIn,
 	Error
 }

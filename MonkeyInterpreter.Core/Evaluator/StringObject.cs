@@ -1,6 +1,4 @@
-﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
-
-namespace MonkeyInterpreter.Core.Evaluator;
+﻿namespace MonkeyInterpreter.Core.Evaluator;
 
 public class StringObject : IObject
 {
