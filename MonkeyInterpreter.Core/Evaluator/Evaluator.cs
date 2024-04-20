@@ -1,4 +1,5 @@
-﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
+﻿using System.Runtime.InteropServices.JavaScript;
+using MonkeyInterpreter.Core.AbstractSyntaxTree;
 
 namespace MonkeyInterpreter.Core.Evaluator;
 
@@ -97,6 +98,9 @@ public static class Evaluator
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
 			
+			case StringLiteral stringLiteral:
+				return new StringObject(stringLiteral.Value);
+			
 			case BooleanLiteral booleanLiteral:
 				return booleanLiteral.Value switch
 				{
@@ -150,15 +154,22 @@ public static class Evaluator
 
 	private static IObject ApplyFunction(IObject function, List<IObject> arguments)
 	{
-		if (function is not FunctionObject functionObject)
+		switch (function)
 		{
-			return GenerateError("Not a function: {0}", function.Type());
+			case FunctionObject functionObject:
+				VariableEnvironment extendedEnvironment = ExtendFunctionEnvironment(functionObject, arguments);
+				IObject evaluated = Evaluate(functionObject.Body, extendedEnvironment);
+				return UnwrapReturnValue(evaluated);
+			
+			case BuiltInObject builtInObject:
+				return builtInObject.Function(arguments.ToArray());
+			
+			default:
+				return GenerateError("Not a function: {0}", function.Type());
 		}
+		
 
-		VariableEnvironment extendedEnvironment = ExtendFunctionEnvironment(functionObject, arguments);
-		IObject evaluated = Evaluate(functionObject.Body, extendedEnvironment);
 
-		return UnwrapReturnValue(evaluated);
 	}
 
 	private static VariableEnvironment ExtendFunctionEnvironment(FunctionObject function, List<IObject> arguments)
@@ -186,12 +197,18 @@ public static class Evaluator
 	private static IObject EvaluateIdentifier(Identifier identifier, VariableEnvironment env)
 	{
 		IObject? value = env.Get(identifier.Value);
-		if (value is null)
+		if (value is not null)
 		{
-			return GenerateError("Identifier not found: {0}", identifier.Value);
+			 return value;
 		}
 
-		return value;
+		value = BuiltIns.BuiltInFunctions.GetValueOrDefault(identifier.Value);
+		if (value is not null)
+		{
+			return value;
+		}
+			
+		return GenerateError("Identifier not found: {0}", identifier.Value);
 	}
 
 	private static IObject EvaluatePrefixExpression(string @operator, IObject right)
@@ -237,6 +254,9 @@ public static class Evaluator
 		{ 
 			case true when left.Type() == ObjectTypeEnum.Integer && right.Type() == ObjectTypeEnum.Integer:
 				return EvaluateIntegerInfixExpression(@operator, left, right);
+			
+			case true when left.Type() == ObjectTypeEnum.String && right.Type() == ObjectTypeEnum.String:
+				return EvaluateStringInfixExpression(@operator, left, right);
 			
 			case true when @operator == "==":
 				return left == right ? TrueBooleanObject : FalseBooleanObject;
@@ -299,6 +319,27 @@ public static class Evaluator
 					left.Type(), @operator, right.Type());
 		}
 	}
+	
+	private static IObject EvaluateStringInfixExpression(string @operator, IObject left, IObject right)
+	{
+		string leftValue = ((StringObject)left).Value;
+		string rightValue = ((StringObject)right).Value;
+		
+		switch (@operator)
+		{
+			case "+": 
+				return new StringObject(leftValue + rightValue);
+			
+			case "==":
+				return leftValue == rightValue ? TrueBooleanObject : FalseBooleanObject;
+			
+			case "!=":
+				return leftValue != rightValue ? TrueBooleanObject : FalseBooleanObject;
+			
+			default:
+				return GenerateError("Unknown operator: {0} {1} {2}", left.Type(), @operator, right.Type());
+		}
+	}
 
 	private static IObject EvaluateIfExpression(IfExpression ifExpression, VariableEnvironment env)
 	{
@@ -321,7 +362,7 @@ public static class Evaluator
 		return NullObject;
 	}
 
-	private static ErrorObject GenerateError(string format, params object[] objects)
+	public static ErrorObject GenerateError(string format, params object[] objects)
 	{
 		return new ErrorObject(string.Format(format, objects));
 	}

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.JavaScript;
 using MonkeyInterpreter.Core.AbstractSyntaxTree;
 using Xunit.Abstractions;
 
@@ -92,6 +93,7 @@ public class GenericTests
 	
 	[Theory]
 	[InlineData("5;", typeof(IntegerLiteral))]
+	[InlineData("\"Hello world\";", typeof(StringLiteral))]
 	[InlineData("true;", typeof(BooleanLiteral))]
 	[InlineData("foobar;", typeof(Identifier))]
 	[InlineData("!5;", typeof(PrefixExpression))]
@@ -205,6 +207,21 @@ public class IntegerLiteralExpressionTests
 
 		Assert.All(expressionStatements,
 			expressionStatement => Assert.Equal(expectedValue, ((IntegerLiteral)expressionStatement.Expression).Value));
+	}
+}
+
+public class StringLiteralTests
+{
+	[Theory]
+	[InlineData("\"Hello world\";", "Hello world")]
+	public void StringLiteral_ReturnsExpectedValue(string expression, string expectedValue)
+	{
+		Program program = new(expression);
+		List<ExpressionStatement> expressionStatements = program.Ast.Statements
+			.Select(statement => (ExpressionStatement)statement).ToList();
+
+		Assert.All(expressionStatements,
+			expressionStatement => Assert.Equal(expectedValue, ((StringLiteral)expressionStatement.Expression).Value));
 	}
 }
 
