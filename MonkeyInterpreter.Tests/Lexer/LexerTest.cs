@@ -40,6 +40,8 @@ public class LexerTest
 		            		
 		            		10 == 10;
 		            		10 != 9;
+		            		"foobar";
+		            		"foo bar";
 		            """;
 		var tests = new List<List<string>>()
 		{
@@ -115,6 +117,10 @@ public class LexerTest
 			new() { Token.Int, "10" },
 			new() { Token.NEqual, "!=" },
 			new() { Token.Int, "9" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.String, "foobar" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.String, "foo bar" },
 			new() { Token.Semicolon, ";" },
 			new() { Token.Eof, "" },
 		};

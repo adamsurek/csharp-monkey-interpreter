@@ -101,6 +101,10 @@ public class Lexer
 				token = new Token(Token.Eof, '\0'.ToString());
 				break;
 			
+			case '"':
+				token = new Token(Token.String, ReadString());
+				break;
+			
 			default:
 				if (IsLetter(Character))
 				{
@@ -126,7 +130,7 @@ public class Lexer
 		return token;
 	}
 
-	public void ReadCharacter()
+	private void ReadCharacter()
 	{
 		if (ReadPosition >= Input.Length)
 		{
@@ -139,6 +143,17 @@ public class Lexer
 
 		Position = ReadPosition;
 		ReadPosition += 1;
+	}
+
+	private string ReadString()
+	{
+		int startPosition = Position + 1;
+		do
+		{
+			ReadCharacter();
+		} while (Character != '"' && Character != 0);
+
+		return Input.Substring(startPosition, Position - startPosition);
 	}
 	
 	private string ReadIdentifier()

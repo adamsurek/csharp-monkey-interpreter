@@ -83,6 +83,23 @@ public class IntegerEvaluationTests
 	}
 }
 
+public class StringLiteralTests
+{
+	[Theory]
+	[InlineData("\"Hello world\"", "Hello world")]
+	[InlineData("let a = \"foobar\"; a;", "foobar")]
+	[InlineData("let identity = fn(x) { \"foobar\"; }; identity(5);", "foobar")]
+	[InlineData("\"Hello\" + \" \" + \"world\"", "Hello world")]
+	public void StringObject_HasExpectedValue(string expression, string expectedValue)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		StringObject evaluatedObject = (StringObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+
+		Assert.Equal(expectedValue, evaluatedObject.Value);
+	}
+}
+
 public class BooleanEvaluationTests
 {
 	[Theory]
@@ -174,6 +191,7 @@ public class ErrorHandlingTests
 	[InlineData("if (10 > 1) { true + false; }","Unknown operator: Boolean + Boolean")]
 	[InlineData("if (10 > 1) { if (10 > 1) { return true + false; } return 1; }","Unknown operator: Boolean + Boolean")]
 	[InlineData("foobar", "Identifier not found: foobar")]
+	[InlineData("\"Hello\" - \"world\"", "Unknown operator: String - String")]
 	public void ErrorHandling_OutputsCorrectError(string expression, string expectedError)
 	{
 		Program program = new(expression);

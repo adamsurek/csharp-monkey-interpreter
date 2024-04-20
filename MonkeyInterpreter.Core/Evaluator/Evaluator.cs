@@ -1,4 +1,5 @@
-﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
+﻿using System.Runtime.InteropServices.JavaScript;
+using MonkeyInterpreter.Core.AbstractSyntaxTree;
 
 namespace MonkeyInterpreter.Core.Evaluator;
 
@@ -96,6 +97,9 @@ public static class Evaluator
 			
 			case IntegerLiteral integerLiteral:
 				return new IntegerObject(integerLiteral.Value);
+			
+			case StringLiteral stringLiteral:
+				return new StringObject(stringLiteral.Value);
 			
 			case BooleanLiteral booleanLiteral:
 				return booleanLiteral.Value switch
@@ -238,6 +242,9 @@ public static class Evaluator
 			case true when left.Type() == ObjectTypeEnum.Integer && right.Type() == ObjectTypeEnum.Integer:
 				return EvaluateIntegerInfixExpression(@operator, left, right);
 			
+			case true when left.Type() == ObjectTypeEnum.String && right.Type() == ObjectTypeEnum.String:
+				return EvaluateStringInfixExpression(@operator, left, right);
+			
 			case true when @operator == "==":
 				return left == right ? TrueBooleanObject : FalseBooleanObject;
 			
@@ -297,6 +304,27 @@ public static class Evaluator
 			default:
 				return GenerateError("Unknown operator: {0} {1} {2}",
 					left.Type(), @operator, right.Type());
+		}
+	}
+	
+	private static IObject EvaluateStringInfixExpression(string @operator, IObject left, IObject right)
+	{
+		string leftValue = ((StringObject)left).Value;
+		string rightValue = ((StringObject)right).Value;
+		
+		switch (@operator)
+		{
+			case "+": 
+				return new StringObject(leftValue + rightValue);
+			
+			case "==":
+				return leftValue == rightValue ? TrueBooleanObject : FalseBooleanObject;
+			
+			case "!=":
+				return leftValue != rightValue ? TrueBooleanObject : FalseBooleanObject;
+			
+			default:
+				return GenerateError("Unknown operator: {0} {1} {2}", left.Type(), @operator, right.Type());
 		}
 	}
 

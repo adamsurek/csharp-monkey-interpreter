@@ -8,6 +8,7 @@ public class Token(string type, string literal)
 	// Identifiers
 	public const string Ident = "IDENT";
 	public const string Int = "INT";
+	public const string String = "STRING";
 
 	// Operators
 	public const string Assign = "=";
