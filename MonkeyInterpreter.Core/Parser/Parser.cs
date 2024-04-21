@@ -12,7 +12,8 @@ public enum TokenPrecedence
 	Sum,
 	Product,
 	Prefix,
-	Call
+	Call,
+	Index
 }
 
 public class Parser
@@ -39,6 +40,7 @@ public class Parser
 		{ Token.Slash, TokenPrecedence.Product },
 		{ Token.Asterisk, TokenPrecedence.Product },
 		{ Token.LParen, TokenPrecedence.Call },
+		{ Token.LBracket, TokenPrecedence.Index}
 	};
 
 	public Parser(Lexer lexer)
@@ -57,6 +59,7 @@ public class Parser
 		RegisterPrefixFunction(Token.True, ParseBooleanLiteral);
 		RegisterPrefixFunction(Token.False, ParseBooleanLiteral);
 		RegisterPrefixFunction(Token.LParen, ParseGroupedExpression);
+		RegisterPrefixFunction(Token.LBracket, ParseArrayLiteral);
 		RegisterPrefixFunction(Token.If, ParseIfExpression);
 		RegisterPrefixFunction(Token.Function,  ParseFunctionLiteral);
 
@@ -70,6 +73,7 @@ public class Parser
 		RegisterInfixFunction(Token.LThan, ParseInfixExpression);
 		RegisterInfixFunction(Token.GThan, ParseInfixExpression);
 		RegisterInfixFunction(Token.LParen, ParseCallExpression);
+		RegisterInfixFunction(Token.LBracket, ParseIndexExpression);
 	}
 
 	public AbstractSyntaxTree.AbstractSyntaxTree ParseProgram()
@@ -259,6 +263,65 @@ public class Parser
 		return expression;
 	}
 
+	private IExpression ParseArrayLiteral()
+	{
+		Token currentToken = _currentToken;
+		
+		return new ArrayLiteral(currentToken, ParseExpressionList(Token.RBracket));
+	}
+
+	private List<IExpression>? ParseExpressionList(string end)
+	{
+		List<IExpression> expressions = new();
+
+		if (IsPeekToken(end))
+		{
+			NextToken();
+			return expressions;
+		}
+		
+		NextToken();
+		
+		IExpression? expression = ParseExpression(TokenPrecedence.Lowest);
+		if (expression is not null)
+		{
+			expressions.Add(expression);
+		}
+
+		while (IsPeekToken(Token.Comma))
+		{
+			NextToken();
+			NextToken();
+
+			expression = ParseExpression(TokenPrecedence.Lowest);
+			if (expression is not null)
+			{
+				expressions.Add(expression);
+			}
+		}
+
+		if (!ExpectPeek(end))
+		{
+			return null;
+		}
+
+		return expressions;
+	}
+
+	private IExpression? ParseIndexExpression(IExpression left)
+	{
+		Token currentToken = _currentToken;
+		NextToken();
+
+		IExpression? index = ParseExpression(TokenPrecedence.Lowest);
+		if (!ExpectPeek(Token.RBracket))
+		{
+			return null;
+		}
+
+		return new IndexExpression(currentToken, left, index);
+	}
+
 	private IExpression? ParseIfExpression()
 	{
 		Token currentToken = _currentToken;
@@ -331,7 +394,6 @@ public class Parser
 
 		return new FunctionLiteral(currentToken, parameters, ParseBlockStatement());
 	}
-	
 
 	private BlockStatement ParseBlockStatement()
 	{
@@ -388,56 +450,15 @@ public class Parser
 
 	private IExpression? ParseCallExpression(IExpression function)
 	{
-		List<IExpression>? arguments = ParseCallArguments();
+		Token currentToken = _currentToken;
+		List<IExpression>? arguments = ParseExpressionList(Token.RParen);
 
 		if (arguments is null)
 		{
 			return null;
 		}
 		
-		return new CallExpression(_currentToken, function, arguments);
-	}
-
-	private List<IExpression>? ParseCallArguments()
-	{
-		List<IExpression> arguments = new();
-
-		if (IsPeekToken(Token.RParen))
-		{
-			NextToken();
-			return arguments;
-		}
-		
-		NextToken();
-
-		IExpression? argument = ParseExpression(TokenPrecedence.Lowest);
-		if (argument is not null)
-		{
-			arguments.Add(argument);
-		}
-		
-		// arguments.Add(ParseExpression(TokenPrecedence.Lowest));
-
-		while (IsPeekToken(Token.Comma))
-		{
-			NextToken();
-			NextToken();
-
-			argument = ParseExpression(TokenPrecedence.Lowest);
-			if (argument is not null)
-			{
-				arguments.Add(argument);
-			}
-			
-			// arguments.Add(ParseExpression(TokenPrecedence.Lowest));
-		}
-
-		if (!ExpectPeek(Token.RParen))
-		{
-			return null;
-		}
-
-		return arguments;
+		return new CallExpression(currentToken, function, arguments);
 	}
 
 	private IExpression? ParsePrefixExpression()

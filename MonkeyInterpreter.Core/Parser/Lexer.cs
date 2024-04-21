@@ -97,6 +97,14 @@ public class Lexer
 				token = new Token(Token.RBrace, Character.ToString());
 				break;
 			
+			case '[':
+				token = new Token(Token.LBracket, Character.ToString());
+				break;
+			
+			case ']':
+				token = new Token(Token.RBracket, Character.ToString());
+				break;
+			
 			case '\0':
 				token = new Token(Token.Eof, '\0'.ToString());
 				break;
@@ -178,7 +186,7 @@ public class Lexer
 
 	private bool IsLetter(char character)
 	{
-		return character is >= 'a' or >= 'A' and >= 'Z';
+		return ('a' <= character && character <= 'z') || ('A' <= character && character <= 'Z' || character == '_');
 	}
 
 	private void SkipWhitespace()

@@ -6,8 +6,9 @@ public enum ObjectTypeEnum
 	Integer,
 	String,
 	Boolean,
+	Array,
 	ReturnValue,
 	Function,
 	BuiltIn,
-	Error
+	Error,
 }

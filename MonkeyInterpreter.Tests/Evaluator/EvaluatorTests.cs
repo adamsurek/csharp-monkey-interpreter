@@ -1,5 +1,4 @@
-﻿using MonkeyInterpreter.Core;
-using MonkeyInterpreter.Core.AbstractSyntaxTree;
+﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
 using MonkeyInterpreter.Core.Evaluator;
 
 namespace MonkeyInterpreter.Tests.Evaluator;
@@ -271,5 +270,104 @@ public class BuiltInFunctionTests
 		};
 		
 		Assert.Equal(expectedValue, actualValue);
+	}
+}
+
+public class ArrayLiteralTests
+{
+	[Theory]
+	[InlineData("[0]", 1)]
+	[InlineData("[1, 2 * 2, 3 + 3]", 3)]
+	public void ArrayObject_HasExpectedElementCount(string expression, int expectedElementCount)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		ArrayObject arrayLiteral = (ArrayObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+		
+		Assert.Equal(expectedElementCount, arrayLiteral.Elements.Count);
+
+	}
+	
+	[Theory]
+	[InlineData("[0]" , new object[] { 0 })]
+	[InlineData("[1, 2 * 2, 3 + 3]", new object[] { 1, 4, 6})]
+	public void ArrayObject_ElementsEvaluateAsExpected(string expression, object[] expectedElementValues)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		ArrayObject arrayLiteral = (ArrayObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+
+		List<object> actualValues = new();
+
+		for (int i = 0; i < arrayLiteral.Elements.Count; i++)
+		{
+			switch (arrayLiteral.Elements[i])
+			{
+				case IntegerObject integerObject:
+					actualValues.Add(integerObject.Value);
+					break;
+				
+				case StringObject stringObject:
+					actualValues.Add(stringObject.Value);
+					break;
+				
+				case BooleanObject booleanObject:
+					actualValues.Add(booleanObject.Value);
+					break;
+				
+				default:
+					Assert.Fail("Invalid Element object type");
+					break;
+			}
+		}
+		
+		Assert.Equal(expectedElementValues, actualValues);
+	}
+}
+
+public class IndexExpressionTests
+{
+	[Theory]
+	[InlineData("[1,2,3][0]", 1)]
+	[InlineData("[1,2,3][1]", 2)]
+	[InlineData("[1,2,3][2]", 3)]
+	[InlineData("[1,2,3][3]", null)]
+	[InlineData( "let i = 0; [1][i];", 1)]
+	[InlineData("[1,2,3][1 + 1]", 3)]
+	[InlineData( "let myArray= [1,2,3]; myArray[1];", 2)]
+	[InlineData( "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];", 6)]
+	[InlineData(  "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]", 2)]
+	[InlineData(  "[1, 2, 3][-1]", null)]
+	[InlineData(  "[\"test\", true][0]", "test")]
+	[InlineData(  "[\"test\", true][1]", true)]
+	public void IndexExpression_ReturnsExpectedValue(string expression, object expectedValue)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		IObject resultObject = Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+
+		object? value;
+
+		switch (resultObject)
+		{
+			case IntegerObject integerObject:
+				value = integerObject.Value;
+				break;
+			
+			case StringObject stringObject:
+				value = stringObject.Value;
+				break;
+			
+			case BooleanObject booleanObject:
+				value = booleanObject.Value;
+				break;
+			
+			default:
+				value = null;
+				break;
+		}
+		
+		Assert.Equal(expectedValue, value);
+
 	}
 }

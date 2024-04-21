@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.JavaScript;
-using MonkeyInterpreter.Core.AbstractSyntaxTree;
+﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
 using Xunit.Abstractions;
 
 namespace MonkeyInterpreter.Tests.Parser;
@@ -110,6 +106,8 @@ public class GenericTests
 	[InlineData("if (x < y) { x } else { y }", typeof(IfExpression))]
 	[InlineData("fn(x, y) { x + y; }", typeof(FunctionLiteral))]
 	[InlineData("add(1, 2 * 3, 4 + 5);", typeof(CallExpression))]
+	[InlineData("[1, 2 * 2, 3 + 3];", typeof(ArrayLiteral))]
+	[InlineData("myArray[1 + 1];", typeof(IndexExpression))]
 	public void AbstractSyntaxTree_Expressions_AreExpectedTypes(string expression, Type expectedType)
 	{
 		Program program = new(expression);
@@ -367,6 +365,7 @@ public class OperatorPrecedenceTests
 	[InlineData("a*b*c","((a*b)*c)")]
 	[InlineData("a*b/c","((a*b)/c)")]
 	[InlineData("a+b/c","(a+(b/c))")]
+	[InlineData("1+b[0]","(1+(b[0]))")]
 	[InlineData("a+b*c+d/e-f","(((a+(b*c))+(d/e))-f)")]
 	[InlineData("3+4;-5*5","(3+4)((-5)*5)")]
 	[InlineData("5>4==3<4","((5>4)==(3<4))")]
@@ -378,6 +377,8 @@ public class OperatorPrecedenceTests
 	[InlineData("a+add(b*c)+d","((a+add((b*c)))+d)")]
 	[InlineData("add(a,b,1,2*3,4+5,add(6,7*8))","add(a, b, 1, (2*3), (4+5), add(6, (7*8)))")]
 	[InlineData("add(a+b+c*d/f+g)","add((((a+b)+((c*d)/f))+g))")]
+	[InlineData("a*[1, 2, 3, 4][b*c]*d","((a*([1, 2, 3, 4][(b*c)]))*d)")]
+	[InlineData("add(a*b[2],b[1],2*[1,2][1])","add((a*(b[2])), (b[1]), (2*([1, 2][1])))")]
 	public void OperatorPrecedence_OperatorsParsedWithCorrectPrecedence(string expression, string expectedPrecedence)
 	{
 		Program program = new(expression);
@@ -586,5 +587,63 @@ public class CallExpressionTests
 		Assert.All(callExpressions,
 			callExpression => Assert.Equal(expectedParameters, callExpression.Arguments!
 				.Select(argument => argument.String())));
+	}
+}
+
+public class ArrayLiteralTests
+{
+	[Theory]
+	[InlineData("[1, 2 * 2, 3 + 3];", 3)]
+	public void ArrayLiteral_HasExpectedElementCount(string expression, int expectedElementCount)
+	{
+		Program program = new(expression);
+
+		ExpressionStatement expressionStatements = (ExpressionStatement)program.Ast.Statements.First();
+		ArrayLiteral arrayLiteral = (ArrayLiteral)expressionStatements.Expression!;
+
+		Assert.Equal(expectedElementCount, arrayLiteral.Elements.Count);
+	}
+}
+
+public class IndexExpressionTests
+{
+	[Theory]
+	[InlineData("myArray[1 + 1];", "myArray")]
+	public void IndexExpression_HasExpectedLeftExpression(string expression, string expectedLeftIdentifier)
+	{
+		Program program = new(expression);
+
+		ExpressionStatement expressionStatements = (ExpressionStatement)program.Ast.Statements.First();
+		IndexExpression indexExpression = (IndexExpression)expressionStatements.Expression!;
+
+		Assert.Equal(expectedLeftIdentifier, indexExpression.Left.String());
+	}
+	
+	[Theory]
+	[InlineData("myArray[0];", typeof(IntegerLiteral))]
+	[InlineData("myArray[1 + 1];", typeof(InfixExpression))]
+	public void IndexExpression_IndexIsExpectedType(string expression, Type expectedIndexType)
+	{
+		Program program = new(expression);
+
+		ExpressionStatement expressionStatements = (ExpressionStatement)program.Ast.Statements.First();
+		IndexExpression indexExpression = (IndexExpression)expressionStatements.Expression!;
+
+		Assert.IsType(expectedIndexType, indexExpression.Index);
+	}
+	
+	
+	[Theory]
+	[InlineData("myArray[10];", 10)]
+	[InlineData("myArray[0];",0)]
+	public void IndexExpression_HasExpectedIndex(string expression, int? expectedIndex)
+	{
+		Program program = new(expression);
+
+		ExpressionStatement expressionStatements = (ExpressionStatement)program.Ast.Statements.First();
+		IndexExpression indexExpression = (IndexExpression)expressionStatements.Expression!;
+		IntegerLiteral indexValue = (IntegerLiteral)indexExpression.Index;
+		
+		Assert.Equal(expectedIndex, indexValue.Value);
 	}
 }
