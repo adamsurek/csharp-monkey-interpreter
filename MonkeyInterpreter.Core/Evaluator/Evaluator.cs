@@ -115,6 +115,21 @@ public static class Evaluator
 				}
 
 				return new ArrayObject(elements);
+			
+			case IndexExpression indexExpression:
+				IObject left = Evaluate(indexExpression.Left, env);
+				if (left.Type() == ObjectTypeEnum.Error)
+				{
+					return left;
+				}
+
+				IObject index = Evaluate(indexExpression.Index, env);
+				if (index.Type() == ObjectTypeEnum.Error)
+				{
+					return index;
+				}
+
+				return EvaluateIndexExpression(left, index);
 
 			default:
 				return NullObject;
@@ -280,6 +295,32 @@ public static class Evaluator
 				return GenerateError("Unknown operator: {0} {1} {2}",
 					left.Type(), @operator, right.Type());
 		}
+	}
+
+	private static IObject EvaluateIndexExpression(IObject left, IObject index)
+	{
+		switch (true)
+		{
+			case true when left.Type() == ObjectTypeEnum.Array && index.Type() == ObjectTypeEnum.Integer:
+				return EvaluateArrayExpression(left, index);
+			
+			default:
+				return GenerateError("Index operator not supported: {0]", left.Type());
+		}
+	}
+
+	private static IObject EvaluateArrayExpression(IObject left, IObject index)
+	{
+		ArrayObject arrayObject = (ArrayObject)left;
+		int requestedIndex = ((IntegerObject)index).Value;
+		int maxIndex = arrayObject.Elements.Count - 1;
+
+		if (requestedIndex < 0 || requestedIndex > maxIndex)
+		{
+			return NullObject;
+		}
+
+		return arrayObject.Elements[requestedIndex];
 	}
 
 	private static IObject EvaluateBlockStatement(BlockStatement blockStatement, VariableEnvironment env)
