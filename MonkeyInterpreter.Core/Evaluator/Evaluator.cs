@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-using MonkeyInterpreter.Core.AbstractSyntaxTree;
+﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
 
 namespace MonkeyInterpreter.Core.Evaluator;
 
@@ -108,6 +107,15 @@ public static class Evaluator
 					false => FalseBooleanObject
 				};
 			
+			case ArrayLiteral arrayLiteral:
+				List<IObject> elements = EvaluateExpressions(arrayLiteral.Elements, env);
+				if (elements.Count == 1 && elements[0].Type() == ObjectTypeEnum.Error)
+				{
+					return elements[0];
+				}
+
+				return new ArrayObject(elements);
+
 			default:
 				return NullObject;
 		}

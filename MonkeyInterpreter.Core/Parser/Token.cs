@@ -32,6 +32,8 @@ public class Token(string type, string literal)
 	public const string RParen = ")";
 	public const string LBrace = "{";
 	public const string RBrace = "}";
+	public const string LBracket = "[";
+	public const string RBracket = "]";
 
 	// Keywords
 	public const string Function = "FUNCTION";

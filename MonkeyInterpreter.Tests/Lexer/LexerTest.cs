@@ -1,12 +1,9 @@
-using System.Runtime.InteropServices;
 using MonkeyInterpreter.Core.Parser;
 using Xunit.Abstractions;
 
 namespace MonkeyInterpreter.Tests.Lexer;
 
-using System.Collections.Generic;
-
-using Core;
+// TODO: Rework test to follow standardized structure - see Parser or Evaluator tests
 
 public class LexerTest
 {
@@ -42,6 +39,8 @@ public class LexerTest
 		            		10 != 9;
 		            		"foobar";
 		            		"foo bar";
+		            		
+		            		[1,2];
 		            """;
 		var tests = new List<List<string>>()
 		{
@@ -121,6 +120,12 @@ public class LexerTest
 			new() { Token.String, "foobar" },
 			new() { Token.Semicolon, ";" },
 			new() { Token.String, "foo bar" },
+			new() { Token.Semicolon, ";" },
+			new() { Token.LBracket, "[" },
+			new() { Token.Int, "1" },
+			new() { Token.Comma, "," },
+			new() { Token.Int, "2" },
+			new() { Token.RBracket, "]" },
 			new() { Token.Semicolon, ";" },
 			new() { Token.Eof, "" },
 		};
