@@ -35,6 +35,7 @@ public class GenericTests
 	[InlineData("return 10; 9;", typeof(IntegerObject))]
 	[InlineData("", typeof(NullObject))]
 	[InlineData("fn(x) { x + 2; }; ", typeof(FunctionObject))]
+	[InlineData("{\"test\": 1}", typeof(HashObject))]
 	public void EvalResult_IsExpectedObjectType(string expression, Type expectedType)
 	{
 		Program program = new(expression);
@@ -370,4 +371,73 @@ public class IndexExpressionTests
 		Assert.Equal(expectedValue, value);
 
 	}
+}
+
+public class HashObjectTests
+{
+	[Theory]
+	[InlineData(
+		"let two = \"two\"; { \"one\": 10 - 9, two: 1 + 1, \"thr\" + \"ee\": 6 / 2, 4: 4, true: 5, false: 6 }",
+		new object[] {"one", "two", "three", 4, true, false},
+		new object[] {1, 2, 3, 4, 5, 6})]
+	public void HashObject_HasExpectedKeys(string expression, object[] keys, object?[] expectedValues)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		HashObject hashObject = (HashObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+	
+		List<HashKey> hashKeys = new();
+
+		foreach (object key in hashKeys)
+		{
+			HashKey? hashKey = null;
+			switch (key)
+			{
+				case string stringExpression:
+					hashKey = new HashKey(new StringObject(stringExpression));
+					break;
+
+				case int integerExpression:
+					hashKey = new HashKey(new IntegerObject(integerExpression));
+					break;
+
+				case bool booleanExpression:
+					hashKey = new HashKey(new BooleanObject(booleanExpression));
+					break;
+
+				default:
+					Assert.Fail($"Unhandled expression type: {key.GetType()}");
+					break;
+			}
+			
+			hashKeys.Add(hashKey);
+		}
+
+		IObject[] hashValues = hashObject.Pairs.Values.Select(pair => pair.Value).ToArray();
+		List<object?> values = new();
+
+		foreach (IObject value in hashValues)
+		{
+			switch (value)
+			{
+				case StringObject stringObject:
+					values.Add(stringObject.Value);
+					break;
+				
+				case IntegerObject integerObject:
+					values.Add(integerObject.Value);
+					break;
+					
+				case BooleanObject booleanObject:
+					values.Add(booleanObject.Value);
+					break;
+				
+				default:
+					values.Add(null);	
+					break;
+			}
+		}
+		
+		Assert.Equal(expectedValues, values);;
+	}	
 }

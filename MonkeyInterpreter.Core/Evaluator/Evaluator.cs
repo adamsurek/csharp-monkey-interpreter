@@ -116,6 +116,9 @@ public static class Evaluator
 
 				return new ArrayObject(elements);
 			
+			case HashLiteral hashLiteral:
+				return EvaluateHashLiteral(hashLiteral, env);
+			
 			case IndexExpression indexExpression:
 				IObject left = Evaluate(indexExpression.Left, env);
 				if (left.Type() == ObjectTypeEnum.Error)
@@ -321,6 +324,46 @@ public static class Evaluator
 		}
 
 		return arrayObject.Elements[requestedIndex];
+	}
+
+	private static IObject EvaluateHashLiteral(HashLiteral hashLiteral, VariableEnvironment env)
+	{
+		Dictionary<HashKey, HashPair> pairs = new();
+
+		foreach (var pair in hashLiteral.Pairs)
+		{
+			IObject key = Evaluate(pair.Key, env);
+			if (key.Type() == ObjectTypeEnum.Error)
+			{
+				return key;
+			}
+
+			IObject value = pair.Value is not null ? Evaluate(pair.Value, env) : NullObject;
+			if (value.Type() == ObjectTypeEnum.Error)
+			{
+				return value;
+			}
+
+			switch (key)
+			{
+				case StringObject stringObject:
+					pairs.Add(new HashKey(stringObject), new HashPair(key, value));
+					break;
+				
+				case IntegerObject integerObject:
+					pairs.Add(new HashKey(integerObject), new HashPair(key, value));
+					break;
+				
+				case BooleanObject booleanObject:
+					pairs.Add(new HashKey(booleanObject), new HashPair(key, value));
+					break;
+				
+				default:
+					return GenerateError("Unusable as hash key: {1}", key.Type());
+			}
+		}
+
+		return new HashObject(pairs);
 	}
 
 	private static IObject EvaluateBlockStatement(BlockStatement blockStatement, VariableEnvironment env)

@@ -60,6 +60,7 @@ public class Parser
 		RegisterPrefixFunction(Token.False, ParseBooleanLiteral);
 		RegisterPrefixFunction(Token.LParen, ParseGroupedExpression);
 		RegisterPrefixFunction(Token.LBracket, ParseArrayLiteral);
+		RegisterPrefixFunction(Token.LBrace, ParseHashLiteral);
 		RegisterPrefixFunction(Token.If, ParseIfExpression);
 		RegisterPrefixFunction(Token.Function,  ParseFunctionLiteral);
 
@@ -320,6 +321,41 @@ public class Parser
 		}
 
 		return new IndexExpression(currentToken, left, index);
+	}
+
+	private IExpression? ParseHashLiteral()
+	{
+		HashLiteral hashLiteral = new(_currentToken, new Dictionary<IExpression, IExpression?>());
+
+		while (!IsPeekToken(Token.RBrace))
+		{
+			NextToken();
+
+			IExpression? hashKey = ParseExpression(TokenPrecedence.Lowest);
+
+			if (hashKey is null || !ExpectPeek(Token.Colon))
+			{
+				return null;
+			}
+
+			NextToken();
+
+			IExpression? hashValue = ParseExpression(TokenPrecedence.Lowest);
+
+			if (!IsPeekToken(Token.RBrace) && !ExpectPeek(Token.Comma))
+			{
+				return null;
+			}
+			
+			hashLiteral.Pairs.Add(hashKey, hashValue);
+		}
+
+		if (!ExpectPeek(Token.RBrace))
+		{
+			return null;
+		}
+
+		return hashLiteral;
 	}
 
 	private IExpression? ParseIfExpression()

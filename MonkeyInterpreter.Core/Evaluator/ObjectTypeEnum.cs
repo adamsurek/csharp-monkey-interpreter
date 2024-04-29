@@ -7,6 +7,7 @@ public enum ObjectTypeEnum
 	String,
 	Boolean,
 	Array,
+	Hash,
 	ReturnValue,
 	Function,
 	BuiltIn,
