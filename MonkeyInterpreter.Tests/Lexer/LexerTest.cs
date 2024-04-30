@@ -41,6 +41,7 @@ public class LexerTest
 		            		"foo bar";
 		            		
 		            		[1,2];
+		            		{"foo": "bar"};
 		            """;
 		var tests = new List<List<string>>()
 		{
@@ -127,10 +128,16 @@ public class LexerTest
 			new() { Token.Int, "2" },
 			new() { Token.RBracket, "]" },
 			new() { Token.Semicolon, ";" },
+			new() { Token.LBrace, "{" },
+			new() { Token.String, "foo" },
+			new() { Token.Colon, ":" },
+			new() { Token.String, "bar" },
+			new() { Token.RBrace, "}" },
+			new() { Token.Semicolon, ";" },
 			new() { Token.Eof, "" },
 		};
 		
-		Core.Parser.Lexer lexer = new Core.Parser.Lexer(input);
+		Core.Parser.Lexer lexer = new(input);
 
 		for (int x = 0; x < tests.Count; x++)
 		{

@@ -1,4 +1,5 @@
 ﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
+using MonkeyInterpreter.Core.Evaluator;
 using Xunit.Abstractions;
 
 namespace MonkeyInterpreter.Tests.Parser;
@@ -645,5 +646,101 @@ public class IndexExpressionTests
 		IntegerLiteral indexValue = (IntegerLiteral)indexExpression.Index;
 		
 		Assert.Equal(expectedIndex, indexValue.Value);
+	}
+}
+
+public class HashLiteralTests
+{
+	[Theory]
+	[InlineData("{\"foo\":\"bar\"}", 1)]
+	[InlineData("{\"foo\":\"bar\", \"test\": 1}", 2)]
+	[InlineData("{}", 0)]
+	public void HashLiteral_HasExpectedElementCount(string expression, int expectedElementCount)
+	{
+		Program program = new(expression);
+
+		ExpressionStatement expressionStatements = (ExpressionStatement)program.Ast.Statements.First();
+		HashLiteral hashLiteral = (HashLiteral)expressionStatements.Expression!;
+		
+		Assert.Equal(expectedElementCount, hashLiteral.Pairs.Count);
+	}
+	
+	[Theory]
+	[InlineData("{\"foo\":\"bar\"}",new object?[] {"bar"})]
+	[InlineData("{\"foo\":\"bar\", \"test\": 1}", new object?[] {"bar", 1})]
+	[InlineData("{\"foo\":\"bar\", \"test\": null}", new object?[] {"bar", null})]
+	[InlineData("{\"foo\":\"bar\", \"test\": \"abc\"}", new object?[] {"bar", "abc"})]
+	[InlineData("{\"foo\":true, \"test\": 80, \"hi\": \"bye\"}", new object?[] {true, 80, "bye"})]
+	public void HashLiteral_HasExpectedValues(string expression, object?[] expectedValues)
+	{
+		Program program = new(expression);
+
+		ExpressionStatement expressionStatements = (ExpressionStatement)program.Ast.Statements.First();
+		HashLiteral hashLiteral = (HashLiteral)expressionStatements.Expression!;
+
+		List<object?> values = new();
+		foreach (var pair in hashLiteral.Pairs)
+		{
+			IExpression? val = hashLiteral.Pairs[pair.Key];
+
+			switch (val)
+			{
+				case StringLiteral stringLiteral:
+					values.Add(stringLiteral.Value);
+					break;
+				
+				case IntegerLiteral integerLiteral:
+					values.Add(integerLiteral.Value);
+					break;
+					
+				case BooleanLiteral booleanLiteral:
+					values.Add(booleanLiteral.Value);
+					break;
+				
+				default:
+					values.Add(null);	
+					break;
+			}
+		}
+		
+		Assert.Equal(expectedValues, values.ToArray());
+	}
+	
+	[Theory]
+	[InlineData("{\"foo\":\"bar\"}",new object[] {"foo"})]
+	[InlineData("{\"foo\":\"bar\", \"test\": 1}", new object[] {"foo", "test"})]
+	[InlineData("{true:\"bar\", 1: \"abc\"}", new object[] {true, 1})]
+	[InlineData("{\"foo\":true, false: 80, 100: \"bye\"}", new object[] {"foo", false, 100})]
+	public void HashLiteral_HasExpectedKeys(string expression, object[] expectedKeys)
+	{
+		Program program = new(expression);
+
+		ExpressionStatement expressionStatements = (ExpressionStatement)program.Ast.Statements.First();
+		HashLiteral hashLiteral = (HashLiteral)expressionStatements.Expression!;
+
+		List<object> values = new();
+		foreach (var pair in hashLiteral.Pairs)
+		{
+			switch (pair.Key)
+			{
+				case StringLiteral stringLiteral:
+					values.Add(stringLiteral.Value);
+					break;
+				
+				case IntegerLiteral integerLiteral:
+					values.Add(integerLiteral.Value);
+					break;
+					
+				case BooleanLiteral booleanLiteral:
+					values.Add(booleanLiteral.Value);
+					break;
+				
+				default:
+					Assert.Fail("Unhandled type!");
+					break;
+			}
+		}
+		
+		Assert.Equal(expectedKeys, values.ToArray());
 	}
 }

@@ -35,6 +35,7 @@ public class GenericTests
 	[InlineData("return 10; 9;", typeof(IntegerObject))]
 	[InlineData("", typeof(NullObject))]
 	[InlineData("fn(x) { x + 2; }; ", typeof(FunctionObject))]
+	[InlineData("{\"test\": 1}", typeof(HashObject))]
 	public void EvalResult_IsExpectedObjectType(string expression, Type expectedType)
 	{
 		Program program = new(expression);
@@ -198,6 +199,7 @@ public class ErrorHandlingTests
 	[InlineData("\"Hello\" - \"world\"", "Unknown operator: String - String")]
 	[InlineData("len(1)", "Argument to 'len' not supported. Expected String but got Integer")]
 	[InlineData("len(\"one\", \"two\")", "Wrong number of arguments. Got 2, expected 1")]
+	[InlineData("{\"name\": \"Monkey\"}[fn(x) { x }];", "Unusable as hash key: Function")]
 	public void ErrorHandling_OutputsCorrectError(string expression, string expectedError)
 	{
 		Program program = new(expression);
@@ -369,5 +371,116 @@ public class IndexExpressionTests
 		
 		Assert.Equal(expectedValue, value);
 
+	}
+}
+
+public class HashObjectTests
+{
+	[Theory]
+	[InlineData(
+		"let two = \"two\"; { \"one\": 10 - 9, two: 1 + 1, \"thr\" + \"ee\": 6 / 2, 4: 4, true: 5, false: 6 }",
+		new object[] {"one", "two", "three", 4, true, false},
+		new object[] {1, 2, 3, 4, 5, 6})]
+	public void HashObject_HasExpectedKeys(string expression, object[] keys, object?[] expectedValues)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		HashObject hashObject = (HashObject)Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+	
+		List<HashKey> hashKeys = new();
+
+		foreach (object key in hashKeys)
+		{
+			switch (key)
+			{
+				case string stringExpression:
+					StringObject stringObject = new(stringExpression);
+					hashKeys.Add(stringObject.HashKey());
+					break;
+
+				case int integerExpression:
+					IntegerObject integerObject = new(integerExpression);
+					hashKeys.Add(integerObject.HashKey());
+					break;
+
+				case bool booleanExpression:
+					BooleanObject booleanObject = new(booleanExpression);
+					hashKeys.Add(booleanObject.HashKey());
+					break;
+
+				default:
+					Assert.Fail($"Unhandled expression type: {key.GetType()}");
+					break;
+			}
+		}
+
+		IObject[] hashValues = hashObject.Pairs.Values.Select(pair => pair.Value).ToArray();
+		List<object?> values = new();
+
+		foreach (IObject value in hashValues)
+		{
+			switch (value)
+			{
+				case StringObject stringObject:
+					values.Add(stringObject.Value);
+					break;
+				
+				case IntegerObject integerObject:
+					values.Add(integerObject.Value);
+					break;
+					
+				case BooleanObject booleanObject:
+					values.Add(booleanObject.Value);
+					break;
+				
+				default:
+					values.Add(null);	
+					break;
+			}
+		}
+		
+		Assert.Equal(expectedValues, values);;
+	}	
+}
+
+public class HashIndexTests
+{
+	[Theory]
+	[InlineData("{\"foo\": 5}[\"foo\"]", 5)]
+	[InlineData("{\"foo\": \"bar\"}[\"foo\"]", "bar")]
+	[InlineData("{1: 5}[1]", 5)]
+	[InlineData("{1: true}[1]", true)]
+	[InlineData("{true: 5}[true]", 5)]
+	[InlineData("{true: null}[true]", null)]
+	[InlineData("{false: 5}[false]", 5)]
+	[InlineData("{false: false}[false]", false)]
+	public void HashIndex_ReturnsExpectedValue(string expression, object expectedValue)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		IObject resultObject = Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+
+		object? resultValue;
+
+		switch (resultObject)
+		{
+			case IntegerObject integerObject:
+				resultValue = integerObject.Value;
+				break;
+			
+			case StringObject stringObject:
+				resultValue = stringObject.Value;
+				break;
+			
+			case BooleanObject booleanObject:
+				resultValue = booleanObject.Value;
+				break;
+			
+			default:
+				resultValue = null;
+				break;
+		}
+		
+		Assert.Equal(expectedValue, resultValue);
 	}
 }

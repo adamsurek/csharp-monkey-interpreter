@@ -116,6 +116,9 @@ public static class Evaluator
 
 				return new ArrayObject(elements);
 			
+			case HashLiteral hashLiteral:
+				return EvaluateHashLiteral(hashLiteral, env);
+			
 			case IndexExpression indexExpression:
 				IObject left = Evaluate(indexExpression.Left, env);
 				if (left.Type() == ObjectTypeEnum.Error)
@@ -302,14 +305,17 @@ public static class Evaluator
 		switch (true)
 		{
 			case true when left.Type() == ObjectTypeEnum.Array && index.Type() == ObjectTypeEnum.Integer:
-				return EvaluateArrayExpression(left, index);
+				return EvaluateArrayIndexExpression(left, index);
+			
+			case true when left.Type() == ObjectTypeEnum.Hash:
+				return EvaluateHashIndexExpression(left, index);
 			
 			default:
-				return GenerateError("Index operator not supported: {0]", left.Type());
+				return GenerateError("Index operator not supported: {0}", left.Type());
 		}
 	}
 
-	private static IObject EvaluateArrayExpression(IObject left, IObject index)
+	private static IObject EvaluateArrayIndexExpression(IObject left, IObject index)
 	{
 		ArrayObject arrayObject = (ArrayObject)left;
 		int requestedIndex = ((IntegerObject)index).Value;
@@ -321,6 +327,55 @@ public static class Evaluator
 		}
 
 		return arrayObject.Elements[requestedIndex];
+	}
+
+	private static IObject EvaluateHashIndexExpression(IObject left, IObject index)
+	{
+		HashObject hash = (HashObject)left;
+
+		if (index is not IHashable hashable)
+		{
+			return GenerateError("Unusable as hash key: {0}", index.Type());
+		}
+
+		HashKey test = hashable.HashKey();
+
+		HashPair? pair = hash.Pairs.GetValueOrDefault(test);
+		if (pair is null)
+		{
+			return NullObject;
+		}
+
+		return pair.Value;
+	}
+
+	private static IObject EvaluateHashLiteral(HashLiteral hashLiteral, VariableEnvironment env)
+	{
+		Dictionary<HashKey, HashPair> pairs = new();
+
+		foreach (KeyValuePair<IExpression, IExpression?> pair in hashLiteral.Pairs)
+		{
+			IObject key = Evaluate(pair.Key, env);
+			if (key.Type() == ObjectTypeEnum.Error)
+			{
+				return key;
+			}
+
+			if (key is not IHashable hashable)
+			{
+				return GenerateError("Unusable as hash key: {0}", key.Type());
+			}
+
+			IObject value = pair.Value is not null ? Evaluate(pair.Value, env) : NullObject;
+			if (value.Type() == ObjectTypeEnum.Error)
+			{
+				return value;
+			}
+
+			pairs.Add(hashable.HashKey(), new HashPair(key, value));
+		}
+
+		return new HashObject(pairs);
 	}
 
 	private static IObject EvaluateBlockStatement(BlockStatement blockStatement, VariableEnvironment env)
