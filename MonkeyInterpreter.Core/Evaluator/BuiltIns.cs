@@ -11,6 +11,7 @@ public static class BuiltIns
 		{ "last", new BuiltInObject(Last) },
 		{ "rest", new BuiltInObject(Rest) },
 		{ "push", new BuiltInObject(Push) },
+		{ "puts", new BuiltInObject(Puts) },
 	};
 
 	private static IObject Len(params IObject[] args)
@@ -125,6 +126,15 @@ public static class BuiltIns
 		elements.Add(args[1]);
 		
 		return new ArrayObject(elements);
+	}
 
+	private static IObject Puts(params IObject[] args)
+	{
+		foreach (IObject arg in args)
+		{
+			Console.WriteLine(arg.Inspect());
+		}
+
+		return new NullObject();
 	}
 }
