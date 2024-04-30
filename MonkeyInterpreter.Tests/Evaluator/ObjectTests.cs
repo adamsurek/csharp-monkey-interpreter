@@ -17,15 +17,18 @@ public class HashKeyTests
 		switch (firstExpression)
 		{
 			case string stringExpression:
-				firstHashKey = new HashKey(new StringObject(stringExpression));
+				StringObject stringObject = new(stringExpression);
+				firstHashKey = stringObject.HashKey();
 				break;
-			
+
 			case int integerExpression:
-				firstHashKey = new HashKey(new IntegerObject(integerExpression));
+				IntegerObject integerObject = new(integerExpression);
+				firstHashKey = integerObject.HashKey();
 				break;
-			
+
 			case bool booleanExpression:
-				firstHashKey = new HashKey(new BooleanObject(booleanExpression));
+				BooleanObject booleanObject = new(booleanExpression);
+				firstHashKey = booleanObject.HashKey();
 				break;
 			
 			default:
@@ -36,15 +39,18 @@ public class HashKeyTests
 		switch (secondExpression)
 		{
 			case string stringExpression:
-				secondHashKey = new HashKey(new StringObject(stringExpression));
+				StringObject stringObject = new(stringExpression);
+				secondHashKey = stringObject.HashKey();
 				break;
-			
+
 			case int integerExpression:
-				secondHashKey = new HashKey(new IntegerObject(integerExpression));
+				IntegerObject integerObject = new(integerExpression);
+				secondHashKey = integerObject.HashKey();
 				break;
-			
+
 			case bool booleanExpression:
-				secondHashKey = new HashKey(new BooleanObject(booleanExpression));
+				BooleanObject booleanObject = new(booleanExpression);
+				secondHashKey = booleanObject.HashKey();
 				break;
 			
 			default:

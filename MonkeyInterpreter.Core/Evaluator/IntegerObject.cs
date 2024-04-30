@@ -1,7 +1,7 @@
 ﻿
 namespace MonkeyInterpreter.Core.Evaluator;
 
-public class IntegerObject : IObject
+public class IntegerObject : IObject, IHashable
 {
 	private const ObjectTypeEnum ObjectType = ObjectTypeEnum.Integer;
 	public readonly int Value;
@@ -19,5 +19,10 @@ public class IntegerObject : IObject
 	public ObjectTypeEnum Type()
 	{
 		return ObjectType;
+	}
+	
+	public HashKey HashKey()
+	{
+		return new HashKey(ObjectType, Value);
 	}
 }

@@ -305,14 +305,17 @@ public static class Evaluator
 		switch (true)
 		{
 			case true when left.Type() == ObjectTypeEnum.Array && index.Type() == ObjectTypeEnum.Integer:
-				return EvaluateArrayExpression(left, index);
+				return EvaluateArrayIndexExpression(left, index);
+			
+			case true when left.Type() == ObjectTypeEnum.Hash:
+				return EvaluateHashIndexExpression(left, index);
 			
 			default:
-				return GenerateError("Index operator not supported: {0]", left.Type());
+				return GenerateError("Index operator not supported: {0}", left.Type());
 		}
 	}
 
-	private static IObject EvaluateArrayExpression(IObject left, IObject index)
+	private static IObject EvaluateArrayIndexExpression(IObject left, IObject index)
 	{
 		ArrayObject arrayObject = (ArrayObject)left;
 		int requestedIndex = ((IntegerObject)index).Value;
@@ -326,16 +329,41 @@ public static class Evaluator
 		return arrayObject.Elements[requestedIndex];
 	}
 
+	private static IObject EvaluateHashIndexExpression(IObject left, IObject index)
+	{
+		HashObject hash = (HashObject)left;
+
+		if (index is not IHashable hashable)
+		{
+			return GenerateError("Unusable as hash key: {0}", index.Type());
+		}
+
+		HashKey test = hashable.HashKey();
+
+		HashPair? pair = hash.Pairs.GetValueOrDefault(test);
+		if (pair is null)
+		{
+			return NullObject;
+		}
+
+		return pair.Value;
+	}
+
 	private static IObject EvaluateHashLiteral(HashLiteral hashLiteral, VariableEnvironment env)
 	{
 		Dictionary<HashKey, HashPair> pairs = new();
 
-		foreach (var pair in hashLiteral.Pairs)
+		foreach (KeyValuePair<IExpression, IExpression?> pair in hashLiteral.Pairs)
 		{
 			IObject key = Evaluate(pair.Key, env);
 			if (key.Type() == ObjectTypeEnum.Error)
 			{
 				return key;
+			}
+
+			if (key is not IHashable hashable)
+			{
+				return GenerateError("Unusable as hash key: {0}", key.Type());
 			}
 
 			IObject value = pair.Value is not null ? Evaluate(pair.Value, env) : NullObject;
@@ -344,23 +372,7 @@ public static class Evaluator
 				return value;
 			}
 
-			switch (key)
-			{
-				case StringObject stringObject:
-					pairs.Add(new HashKey(stringObject), new HashPair(key, value));
-					break;
-				
-				case IntegerObject integerObject:
-					pairs.Add(new HashKey(integerObject), new HashPair(key, value));
-					break;
-				
-				case BooleanObject booleanObject:
-					pairs.Add(new HashKey(booleanObject), new HashPair(key, value));
-					break;
-				
-				default:
-					return GenerateError("Unusable as hash key: {1}", key.Type());
-			}
+			pairs.Add(hashable.HashKey(), new HashPair(key, value));
 		}
 
 		return new HashObject(pairs);

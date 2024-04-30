@@ -1,27 +1,13 @@
-﻿using MonkeyInterpreter.Core.AbstractSyntaxTree;
+﻿namespace MonkeyInterpreter.Core.Evaluator;
 
-namespace MonkeyInterpreter.Core.Evaluator;
-
-public class HashKey
+public struct HashKey
 {
-	public ObjectTypeEnum Type;
-	public int Value;
+	private ObjectTypeEnum _type;
+	private int _value;
 
-	public HashKey(BooleanObject booleanObject)
+	public HashKey(ObjectTypeEnum type, int value)
 	{
-		Type = booleanObject.Type();
-		Value = booleanObject.Value ? 1 : 0;
-	}
-
-	public HashKey(IntegerObject integerObject)
-	{
-		Type = integerObject.Type();
-		Value = integerObject.Value;
-	}
-	
-	public HashKey(StringObject stringObject)
-	{
-		Type = stringObject.Type();
-		Value = stringObject.Value.GetHashCode();
+		_type = type;
+		_value = value;
 	}
 }

@@ -199,6 +199,7 @@ public class ErrorHandlingTests
 	[InlineData("\"Hello\" - \"world\"", "Unknown operator: String - String")]
 	[InlineData("len(1)", "Argument to 'len' not supported. Expected String but got Integer")]
 	[InlineData("len(\"one\", \"two\")", "Wrong number of arguments. Got 2, expected 1")]
+	[InlineData("{\"name\": \"Monkey\"}[fn(x) { x }];", "Unusable as hash key: Function")]
 	public void ErrorHandling_OutputsCorrectError(string expression, string expectedError)
 	{
 		Program program = new(expression);
@@ -390,27 +391,27 @@ public class HashObjectTests
 
 		foreach (object key in hashKeys)
 		{
-			HashKey? hashKey = null;
 			switch (key)
 			{
 				case string stringExpression:
-					hashKey = new HashKey(new StringObject(stringExpression));
+					StringObject stringObject = new(stringExpression);
+					hashKeys.Add(stringObject.HashKey());
 					break;
 
 				case int integerExpression:
-					hashKey = new HashKey(new IntegerObject(integerExpression));
+					IntegerObject integerObject = new(integerExpression);
+					hashKeys.Add(integerObject.HashKey());
 					break;
 
 				case bool booleanExpression:
-					hashKey = new HashKey(new BooleanObject(booleanExpression));
+					BooleanObject booleanObject = new(booleanExpression);
+					hashKeys.Add(booleanObject.HashKey());
 					break;
 
 				default:
 					Assert.Fail($"Unhandled expression type: {key.GetType()}");
 					break;
 			}
-			
-			hashKeys.Add(hashKey);
 		}
 
 		IObject[] hashValues = hashObject.Pairs.Values.Select(pair => pair.Value).ToArray();
@@ -440,4 +441,46 @@ public class HashObjectTests
 		
 		Assert.Equal(expectedValues, values);;
 	}	
+}
+
+public class HashIndexTests
+{
+	[Theory]
+	[InlineData("{\"foo\": 5}[\"foo\"]", 5)]
+	[InlineData("{\"foo\": \"bar\"}[\"foo\"]", "bar")]
+	[InlineData("{1: 5}[1]", 5)]
+	[InlineData("{1: true}[1]", true)]
+	[InlineData("{true: 5}[true]", 5)]
+	[InlineData("{true: null}[true]", null)]
+	[InlineData("{false: 5}[false]", 5)]
+	[InlineData("{false: false}[false]", false)]
+	public void HashIndex_ReturnsExpectedValue(string expression, object expectedValue)
+	{
+		Program program = new(expression);
+		VariableEnvironment env = new();
+		IObject resultObject = Core.Evaluator.Evaluator.Evaluate(program.Ast, env);
+
+		object? resultValue;
+
+		switch (resultObject)
+		{
+			case IntegerObject integerObject:
+				resultValue = integerObject.Value;
+				break;
+			
+			case StringObject stringObject:
+				resultValue = stringObject.Value;
+				break;
+			
+			case BooleanObject booleanObject:
+				resultValue = booleanObject.Value;
+				break;
+			
+			default:
+				resultValue = null;
+				break;
+		}
+		
+		Assert.Equal(expectedValue, resultValue);
+	}
 }
