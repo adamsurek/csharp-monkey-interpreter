@@ -22,11 +22,11 @@ public class HashLiteral : IExpression
 	public string String()
 	{
 		StringBuilder stringBuilder = new();
-		List<string> pairs = new();
+		List<string?> pairs = new();
 
 		foreach (var pair in Pairs)
 		{
-			pairs.Add($"{pair.Key.String()}:{pair.Value.String()}");
+			pairs.Add($"{pair.Key.String()}:{pair.Value?.String()}");
 		}
 
 		stringBuilder.Append("{");

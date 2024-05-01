@@ -79,21 +79,20 @@ public class Parser
 
 	public AbstractSyntaxTree.AbstractSyntaxTree ParseProgram()
 	{
-		AbstractSyntaxTree.AbstractSyntaxTree abstractSyntaxTree = new();
-		abstractSyntaxTree.Statements = new List<IStatement>();
+		List<IStatement> statements = new();
 		
 		while (_currentToken.Type != Token.Eof)
 		{
 			IStatement? statement = ParseStatement();
 			if (statement is not null)
 			{
-				abstractSyntaxTree.Statements.Add(statement);
+				statements.Add(statement);
 			}
 
 			NextToken();
 		}
 
-		return abstractSyntaxTree;
+		return new AbstractSyntaxTree.AbstractSyntaxTree(statements);
 	}
 	
 	private void NextToken()

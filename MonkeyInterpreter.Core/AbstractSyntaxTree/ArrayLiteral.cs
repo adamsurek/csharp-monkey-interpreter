@@ -24,9 +24,12 @@ public class ArrayLiteral : IExpression
 		StringBuilder stringBuilder = new();
 		List<string> elements = new();
 
-		foreach (var element in Elements)
+		if (Elements is not null)
 		{
-			elements.Add(element.String());
+			foreach (var element in Elements)
+			{
+				elements.Add(element.String());
+			}
 		}
 
 		stringBuilder.Append("[");
