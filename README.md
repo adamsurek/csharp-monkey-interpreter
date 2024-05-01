@@ -1,20 +1,28 @@
 ﻿## Writing an Interpreter in C#
 
-### WORK IN PROGRESS
+### Monkey-lang Interpreter
 
-### Project Purpose
+This project is based on Thorsten Ball's [Writing an Interpreter in Go](https://interpreterbook.com/). The end
+result is an interpreter for the Monkey Programming Language. Monkey supports the following actions and features:
 
-This project is based on Thorsten Ball's [Writing an Interpreter in Go](https://interpreterbook.com/) and aims to provide
-me with a better understanding in the following areas:
+- Variable binding
+- Arithmetic expressions
+- A handful of built-in functions
+- Various type and data structure implementations
+  - Integers
+  - Booleans
+  - Strings
+  - Arrays
+  - Hashes (dictionaries)
+  - First-class and higher-order functions
+  - Closures
 
-- How interpreters work, as well as its fundamental components (lexers, parsers, etc.)
-- Unit testing and Test Driven Development
-- Object-oriented programming
-- C# and .NET
-- Golang
+### Project Goal
 
-### Development Process
+By working through this project, I aimed to achieve the following goals:
 
-My intention while working on this project is to follow the book as it's written to get the interpreter in a completely 
-functional state. When I have completed the book, I intend to revisit how the project is structured, rethink some of the 
-book's design decisions to align with standard C#/.Net program design, and further tune the interpreter.
+- Learn how interpreters work, as well as its fundamental components (lexers, parsers, etc.)
+- Become more comfortable with unit testing, specifically using [XUnit](https://xunit.net/)
+- Gain hands on experience with Test Driven Development
+- Increase my knowledge of C#, .NET, and object-oriented programming
+- Become more familiar with Golang
