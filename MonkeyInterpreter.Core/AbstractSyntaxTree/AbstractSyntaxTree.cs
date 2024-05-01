@@ -5,7 +5,11 @@ namespace MonkeyInterpreter.Core.AbstractSyntaxTree;
 public class AbstractSyntaxTree : INode
 {
 	public List<IStatement> Statements;
-	public List<IExpression> Expressions;
+
+	public AbstractSyntaxTree(List<IStatement> statements)
+	{
+		Statements = statements;
+	}
 	
 	public string TokenLiteral()
 	{
